@@ -5,52 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kişisel Hesap Takip Sistemi</title>
   <style>
-    body{font-family:Arial,sans-serif;margin:0;background:#f5f7fb;color:#111827}
+    body{font-family:Arial,sans-serif;margin:0;background:#f3f4f6;color:#111827}
     .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    h1,h2{margin:0 0 12px}
+    .muted{color:#6b7280}
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-    .tab{padding:10px 14px;border:none;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer}
-    .tab.active{background:#111827;color:#fff}
+    .tabs button{padding:10px 14px;border:none;border-radius:999px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer}
+    .tabs button.active{background:#111827;color:#fff}
     .panel{display:none;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:16px;margin-top:14px}
     .panel.active{display:block}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+    .card{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:14px}
     input,select,button{padding:11px;border:1px solid #d1d5db;border-radius:10px;font-size:14px}
     button{background:#111827;color:#fff;cursor:pointer}
     .secondary{background:#e5e7eb;color:#111827}
     .danger{background:#b91c1c}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+    .toolbar > *{width:auto}
     table{width:100%;border-collapse:collapse;margin-top:12px;background:#fff;border-radius:12px;overflow:hidden}
     th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}
     th{background:#111827;color:#fff}
-    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-    .card{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:14px}
-    .muted{color:#6b7280}
     .positive{color:#15803d;font-weight:bold}
     .negative{color:#b91c1c;font-weight:bold}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Kişisel Hesap Takip Sistemi</h1>
-    <p class="muted">Bu sürüm özellikle stabil çalışması için sade tutuldu.</p>
+    <p class="muted">Bu sürüm sıfırdan sade kuruldu. Öncelik: kesin çalışması.</p>
 
     <div class="toolbar">
-      <button id="exportJsonBtn" class="secondary">JSON İndir</button>
-      <button id="importJsonBtn" class="secondary">JSON Yükle</button>
-      <input id="importJsonInput" type="file" accept="application/json" style="display:none">
-      <button id="resetBtn" class="danger">Tüm Verileri Sıfırla</button>
+      <button class="secondary" onclick="downloadJson()">JSON İndir</button>
+      <button class="secondary" onclick="document.getElementById('jsonFile').click()">JSON Yükle</button>
+      <input id="jsonFile" type="file" accept="application/json" style="display:none" onchange="uploadJson(event)">
+      <button class="danger" onclick="resetAll()">Tüm Verileri Sıfırla</button>
     </div>
 
     <div class="tabs">
-      <button class="tab active" data-tab="home">Genel</button>
-      <button class="tab" data-tab="tx">Gelir / Gider</button>
-      <button class="tab" data-tab="cari">Cari</button>
-      <button class="tab" data-tab="invest">Yatırım</button>
-      <button class="tab" data-tab="report">Rapor</button>
+      <button id="tabbtn-home" class="active" onclick="showTab('home')">Genel</button>
+      <button id="tabbtn-tx" onclick="showTab('tx')">Gelir / Gider</button>
+      <button id="tabbtn-cari" onclick="showTab('cari')">Cari</button>
+      <button id="tabbtn-invest" onclick="showTab('invest')">Yatırım</button>
+      <button id="tabbtn-report" onclick="showTab('report')">Rapor</button>
     </div>
 
     <div id="home" class="panel active">
       <div class="cards" id="summaryCards"></div>
-      <h2>Hesaplar</h2>
+      <h2 style="margin-top:18px">Hesap Ekle</h2>
       <div class="grid">
         <input id="accountName" placeholder="Hesap adı">
         <select id="accountType">
@@ -60,7 +62,7 @@
           <option>Dijital Cüzdan</option>
         </select>
         <input id="accountBalance" type="number" step="0.01" placeholder="Başlangıç bakiye">
-        <button id="addAccountBtn">Hesap Ekle</button>
+        <button onclick="addAccount()">Hesap Ekle</button>
       </div>
       <table>
         <thead><tr><th>Hesap</th><th>Tip</th><th>Bakiye</th><th>Sil</th></tr></thead>
@@ -72,15 +74,12 @@
       <h2>Hareket Ekle</h2>
       <div class="grid">
         <input id="txDate" type="date">
-        <select id="txType">
-          <option value="gelir">Gelir</option>
-          <option value="gider">Gider</option>
-        </select>
+        <select id="txType"><option value="gelir">Gelir</option><option value="gider">Gider</option></select>
         <input id="txCategory" placeholder="Kategori">
         <input id="txNote" placeholder="Açıklama (opsiyonel)">
         <input id="txAmount" type="number" step="0.01" placeholder="Tutar">
         <select id="txAccount"></select>
-        <button id="addTxBtn">Hareket Ekle</button>
+        <button onclick="addTransaction()">Hareket Ekle</button>
       </div>
 
       <h2 style="margin-top:20px">Transfer</h2>
@@ -89,20 +88,17 @@
         <select id="transferTo"></select>
         <input id="transferAmount" type="number" step="0.01" placeholder="Tutar">
         <input id="transferDate" type="date">
-        <button id="addTransferBtn">Transfer Yap</button>
+        <button onclick="addTransfer()">Transfer Yap</button>
       </div>
 
       <h2 style="margin-top:20px">Borç / Alacak</h2>
       <div class="grid">
         <input id="debtName" placeholder="Kişi / Kurum">
-        <select id="debtType">
-          <option value="borc">Borç</option>
-          <option value="alacak">Alacak</option>
-        </select>
+        <select id="debtType"><option value="borc">Borç</option><option value="alacak">Alacak</option></select>
         <input id="debtNote" placeholder="Açıklama (opsiyonel)">
         <input id="debtAmount" type="number" step="0.01" placeholder="Tutar">
         <input id="debtDue" type="date">
-        <button id="addDebtBtn">Borç / Alacak Ekle</button>
+        <button onclick="addDebt()">Borç / Alacak Ekle</button>
       </div>
 
       <table>
@@ -129,7 +125,7 @@
         <input id="cariAmount" type="number" step="0.01" placeholder="Tutar">
         <input id="cariNote" placeholder="Açıklama (opsiyonel)">
         <input id="cariDate" type="date">
-        <button id="addCariBtn">Cari Hareket Ekle</button>
+        <button onclick="addCari()">Cari Hareket Ekle</button>
       </div>
       <table>
         <thead><tr><th>Cari</th><th>Bakiye</th><th>Son İşlem</th><th>Sil</th></tr></thead>
@@ -139,26 +135,21 @@
 
     <div id="invest" class="panel">
       <div class="cards" id="investmentCards"></div>
-      <h2>Yatırım Ekle</h2>
+      <h2 style="margin-top:18px">Yatırım Ekle</h2>
       <div class="grid">
-        <select id="investAsset">
-          <option>Altın</option>
-          <option>Gümüş</option>
-          <option>Dolar</option>
-          <option>Euro</option>
-        </select>
+        <select id="investAsset"><option>Altın</option><option>Gümüş</option><option>Dolar</option><option>Euro</option></select>
         <input id="investAmount" type="number" step="0.0001" placeholder="Miktar">
         <input id="investCost" type="number" step="0.01" placeholder="Maliyet fiyatı">
-        <button id="addInvestBtn">Yatırım Ekle</button>
+        <button onclick="addInvestment()">Yatırım Ekle</button>
       </div>
 
       <h2 style="margin-top:20px">Kurlar</h2>
       <div class="toolbar">
-        <button id="fetchRatesBtn">Canlı USD / EUR Çek</button>
-        <button id="editRatesBtn" class="secondary">Kurları Manuel Düzenle</button>
+        <button onclick="fetchRates()">Canlı USD / EUR Çek</button>
+        <button class="secondary" onclick="editRates()">Kurları Manuel Düzenle</button>
       </div>
       <table>
-        <thead><tr><th>Varlık</th><th>Fiyat</th><th>Kaynak</th><th>Düzenle</th></tr></thead>
+        <thead><tr><th>Varlık</th><th>Fiyat</th><th>Kaynak</th></tr></thead>
         <tbody id="ratesBody"></tbody>
       </table>
 
@@ -172,23 +163,21 @@
       <h2>Aylık Rapor</h2>
       <div class="grid">
         <input id="reportMonth" type="month">
-        <button id="reportBtn">Raporu Getir</button>
+        <button onclick="renderReport()">Raporu Getir</button>
       </div>
-      <div class="info" id="reportBox">Bir ay seçip raporu görüntüleyebilirsin.</div>
+      <div id="reportBox" class="muted" style="margin-top:12px"></div>
       <div class="cards" id="reportCards" style="margin-top:16px"></div>
     </div>
   </div>
 
   <script>
-    const KEY = 'hesap_takip_stabil_v1';
-    const BACKUP_KEY = 'hesap_takip_backups_v1';
-    const THEME_KEY = 'hesap_takip_theme_v1';
+    var KEY = 'hesap_takip_plain_working_v1';
 
-    const state = {
+    var state = {
       accounts: [
-        { id: id(), name: 'Nakit', type: 'Nakit', balance: 0 },
-        { id: id(), name: 'Banka', type: 'Banka', balance: 0 },
-        { id: id(), name: 'Kredi Kartı', type: 'Kredi Kartı', balance: 0 }
+        { id: gid(), name: 'Nakit', type: 'Nakit', balance: 0 },
+        { id: gid(), name: 'Banka', type: 'Banka', balance: 0 },
+        { id: gid(), name: 'Kredi Kartı', type: 'Kredi Kartı', balance: 0 }
       ],
       transactions: [],
       debts: [],
@@ -202,135 +191,178 @@
       ]
     };
 
-    function id() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
-    function n(v) { const x = Number(v); return Number.isFinite(x) ? x : 0; }
-    function money(v) { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(n(v)); }
+    function gid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+    function num(v) { var x = Number(v); return isFinite(x) ? x : 0; }
+    function money(v) { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(num(v)); }
     function today() { return new Date().toISOString().slice(0, 10); }
     function thisMonth() { return today().slice(0, 7); }
 
     function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
     function load() {
-      const raw = localStorage.getItem(KEY);
+      var raw = localStorage.getItem(KEY);
       if (!raw) return;
       try {
-        const data = JSON.parse(raw);
+        var data = JSON.parse(raw);
         if (Array.isArray(data.accounts) && data.accounts.length) state.accounts = data.accounts;
         if (Array.isArray(data.transactions)) state.transactions = data.transactions;
         if (Array.isArray(data.debts)) state.debts = data.debts;
         if (Array.isArray(data.customers)) state.customers = data.customers;
         if (Array.isArray(data.investments)) state.investments = data.investments;
         if (Array.isArray(data.rates) && data.rates.length) state.rates = data.rates;
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function showTab(name) {
+      var panels = document.querySelectorAll('.panel');
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+      for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+      var panel = document.getElementById(name);
+      var btn = document.getElementById('tabbtn-' + name);
+      if (panel) panel.classList.add('active');
+      if (btn) btn.classList.add('active');
     }
 
     function setDefaults() {
-      ['txDate','transferDate','installmentDate','debtDue','cariDate'].forEach(function(id){
-        const el = document.getElementById(id);
+      var ids = ['txDate','transferDate','installmentDate','debtDue','cariDate'];
+      for (var i=0;i<ids.length;i++) {
+        var el = document.getElementById(ids[i]);
         if (el && !el.value) el.value = today();
-      });
-      const rm = document.getElementById('reportMonth');
+      }
+      var rm = document.getElementById('reportMonth');
       if (rm && !rm.value) rm.value = thisMonth();
     }
 
-    function applyTheme() {
-      if (localStorage.getItem(THEME_KEY) === 'dark') document.body.classList.add('dark');
-    }
-
     function populateAccountSelects() {
-      const html = state.accounts.map(a => '<option value="'+a.name+'">'+a.name+'</option>').join('');
-      ['txAccount','transferFrom','transferTo','installmentAccount'].forEach(function(id){
-        const el = document.getElementById(id);
+      var html = '';
+      for (var i=0;i<state.accounts.length;i++) html += '<option value="'+state.accounts[i].name+'">'+state.accounts[i].name+'</option>';
+      var ids = ['txAccount','transferFrom','transferTo','installmentAccount'];
+      for (var j=0;j<ids.length;j++) {
+        var el = document.getElementById(ids[j]);
         if (el) el.innerHTML = html;
-      });
+      }
     }
 
-    function summary() {
-      const income = state.transactions.filter(x => x.type === 'gelir').reduce((a,b)=>a+n(b.amount),0);
-      const expense = Math.abs(state.transactions.filter(x => x.type === 'gider').reduce((a,b)=>a+n(b.amount),0));
-      const net = income - expense;
-      const bank = state.accounts.filter(x => x.type === 'Banka').reduce((a,b)=>a+n(b.balance),0);
-      const cash = state.accounts.filter(x => x.type === 'Nakit').reduce((a,b)=>a+n(b.balance),0);
-      const card = Math.abs(state.accounts.filter(x => x.type === 'Kredi Kartı').reduce((a,b)=>a+n(b.balance),0));
-      const invCost = state.investments.reduce((a,b)=>a + (n(b.amount)*n(b.cost)),0);
-      const invCurrent = state.investments.reduce((a,b)=>{
-        const rate = state.rates.find(r => r.asset === b.asset);
-        const price = rate ? n(rate.price) : n(b.cost);
-        return a + (n(b.amount)*price);
-      },0);
-      return { income, expense, net, bank, cash, card, invCost, invCurrent, invPnL: invCurrent - invCost };
+    function getSummary() {
+      var income = 0, expense = 0, bank = 0, cash = 0, card = 0, invCost = 0, invCurrent = 0;
+      for (var i=0;i<state.transactions.length;i++) {
+        if (state.transactions[i].type === 'gelir') income += num(state.transactions[i].amount);
+        if (state.transactions[i].type === 'gider') expense += Math.abs(num(state.transactions[i].amount));
+      }
+      for (var j=0;j<state.accounts.length;j++) {
+        if (state.accounts[j].type === 'Banka') bank += num(state.accounts[j].balance);
+        if (state.accounts[j].type === 'Nakit') cash += num(state.accounts[j].balance);
+        if (state.accounts[j].type === 'Kredi Kartı') card += Math.abs(num(state.accounts[j].balance));
+      }
+      for (var k=0;k<state.investments.length;k++) {
+        invCost += num(state.investments[k].amount) * num(state.investments[k].cost);
+        var rate = state.rates.find(function(r){ return r.asset === state.investments[k].asset; });
+        var current = rate ? num(rate.price) : num(state.investments[k].cost);
+        invCurrent += num(state.investments[k].amount) * current;
+      }
+      return { income: income, expense: expense, net: income-expense, bank: bank, cash: cash, card: card, invCost: invCost, invCurrent: invCurrent, invPnL: invCurrent-invCost };
     }
 
     function renderCards() {
-      const s = summary();
+      var s = getSummary();
       document.getElementById('summaryCards').innerHTML = '' +
-        '<div class="card"><small>Toplam Gelir</small><div class="value positive">'+money(s.income)+'</div></div>' +
-        '<div class="card"><small>Toplam Gider</small><div class="value negative">'+money(s.expense)+'</div></div>' +
-        '<div class="card"><small>Net Durum</small><div class="value '+(s.net>=0?'positive':'negative')+'">'+money(s.net)+'</div></div>' +
-        '<div class="card"><small>Toplam Yatırım</small><div class="value positive">'+money(s.invCurrent)+'</div></div>';
+        '<div class="card"><div class="muted">Toplam Gelir</div><div class="value positive">'+money(s.income)+'</div></div>' +
+        '<div class="card"><div class="muted">Toplam Gider</div><div class="value negative">'+money(s.expense)+'</div></div>' +
+        '<div class="card"><div class="muted">Net Durum</div><div class="value '+(s.net>=0?'positive':'negative')+'">'+money(s.net)+'</div></div>' +
+        '<div class="card"><div class="muted">Toplam Yatırım</div><div class="value positive">'+money(s.invCurrent)+'</div></div>';
 
       document.getElementById('investmentCards').innerHTML = '' +
-        '<div class="card"><small>Toplam Maliyet</small><div class="value">'+money(s.invCost)+'</div></div>' +
-        '<div class="card"><small>Güncel Değer</small><div class="value positive">'+money(s.invCurrent)+'</div></div>' +
-        '<div class="card"><small>Kâr / Zarar</small><div class="value '+(s.invPnL>=0?'positive':'negative')+'">'+money(s.invPnL)+'</div></div>';
+        '<div class="card"><div class="muted">Toplam Maliyet</div><div class="value">'+money(s.invCost)+'</div></div>' +
+        '<div class="card"><div class="muted">Güncel Değer</div><div class="value positive">'+money(s.invCurrent)+'</div></div>' +
+        '<div class="card"><div class="muted">Kâr / Zarar</div><div class="value '+(s.invPnL>=0?'positive':'negative')+'">'+money(s.invPnL)+'</div></div>';
 
       document.getElementById('reportCards').innerHTML = '' +
-        '<div class="card"><small>Toplam Banka</small><div class="value '+(s.bank>=0?'positive':'negative')+'">'+money(s.bank)+'</div></div>' +
-        '<div class="card"><small>Toplam Nakit</small><div class="value '+(s.cash>=0?'positive':'negative')+'">'+money(s.cash)+'</div></div>' +
-        '<div class="card"><small>Toplam Kart Borcu</small><div class="value negative">'+money(s.card)+'</div></div>' +
-        '<div class="card"><small>Net Durum</small><div class="value '+(s.net>=0?'positive':'negative')+'">'+money(s.net)+'</div></div>';
+        '<div class="card"><div class="muted">Toplam Banka</div><div class="value '+(s.bank>=0?'positive':'negative')+'">'+money(s.bank)+'</div></div>' +
+        '<div class="card"><div class="muted">Toplam Nakit</div><div class="value '+(s.cash>=0?'positive':'negative')+'">'+money(s.cash)+'</div></div>' +
+        '<div class="card"><div class="muted">Toplam Kart Borcu</div><div class="value negative">'+money(s.card)+'</div></div>' +
+        '<div class="card"><div class="muted">Net Durum</div><div class="value '+(s.net>=0?'positive':'negative')+'">'+money(s.net)+'</div></div>';
     }
 
     function renderAccounts() {
-      document.getElementById('accountsBody').innerHTML = state.accounts.map((a,i)=>
-        '<tr><td>'+a.name+'</td><td>'+a.type+'</td><td class="'+(n(a.balance)>=0?'positive':'negative')+'">'+money(a.balance)+'</td><td><button data-del-account="'+i+'" class="btn-danger">Sil</button></td></tr>'
-      ).join('') || '<tr><td colspan="4">Kayıt yok.</td></tr>';
+      var html = '';
+      for (var i=0;i<state.accounts.length;i++) {
+        var a = state.accounts[i];
+        html += '<tr><td>'+a.name+'</td><td>'+a.type+'</td><td class="'+(num(a.balance)>=0?'positive':'negative')+'">'+money(a.balance)+'</td><td><button class="danger" onclick="deleteAccount('+i+')">Sil</button></td></tr>';
+      }
+      document.getElementById('accountsBody').innerHTML = html || '<tr><td colspan="4">Kayıt yok.</td></tr>';
     }
 
     function renderTransactions() {
-      document.getElementById('txBody').innerHTML = state.transactions.map((t,i)=>
-        '<tr><td>'+(t.date||'')+'</td><td>'+t.type+'</td><td>'+(t.category||'')+'</td><td>'+(t.note||'-')+'</td><td class="'+(n(t.amount)>=0?'positive':'negative')+'">'+(t.type==='transfer'?'-':money(t.amount))+'</td><td>'+(t.account||'')+'</td><td><button data-del-tx="'+i+'" class="btn-danger">Sil</button></td></tr>'
-      ).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
+      var html = '';
+      for (var i=0;i<state.transactions.length;i++) {
+        var t = state.transactions[i];
+        html += '<tr><td>'+(t.date||'')+'</td><td>'+t.type+'</td><td>'+(t.category||'')+'</td><td>'+(t.note||'-')+'</td><td class="'+(num(t.amount)>=0?'positive':'negative')+'">'+(t.type==='transfer'?'-':money(t.amount))+'</td><td>'+(t.account||'')+'</td><td><button class="danger" onclick="deleteTransaction('+i+')">Sil</button></td></tr>';
+      }
+      document.getElementById('txBody').innerHTML = html || '<tr><td colspan="7">Kayıt yok.</td></tr>';
     }
 
     function renderDebts() {
-      document.getElementById('debtBody').innerHTML = state.debts.map((d,i)=>
-        '<tr><td>'+(d.name||'')+'</td><td>'+(d.type||'')+'</td><td>'+(d.note||'-')+'</td><td>'+money(d.amount)+'</td><td>'+(d.due||'')+'</td><td><button data-del-debt="'+i+'" class="btn-danger">Sil</button></td></tr>'
-      ).join('') || '<tr><td colspan="6">Kayıt yok.</td></tr>';
+      var html = '';
+      for (var i=0;i<state.debts.length;i++) {
+        var d = state.debts[i];
+        html += '<tr><td>'+(d.name||'')+'</td><td>'+(d.type||'')+'</td><td>'+(d.note||'-')+'</td><td>'+money(d.amount)+'</td><td>'+(d.due||'')+'</td><td><button class="danger" onclick="deleteDebt('+i+')">Sil</button></td></tr>';
+      }
+      document.getElementById('debtBody').innerHTML = html || '<tr><td colspan="6">Kayıt yok.</td></tr>';
     }
 
     function renderCustomers() {
-      document.getElementById('cariBody').innerHTML = state.customers.map((c,i)=>
-        '<tr><td>'+c.name+'</td><td class="'+(n(c.balance)>=0?'positive':'negative')+'">'+money(c.balance)+'</td><td>'+(c.lastAction||'-')+'</td><td><button data-del-cari="'+i+'" class="btn-danger">Sil</button></td></tr>'
-      ).join('') || '<tr><td colspan="4">Kayıt yok.</td></tr>';
+      var html = '';
+      for (var i=0;i<state.customers.length;i++) {
+        var c = state.customers[i];
+        html += '<tr><td>'+c.name+'</td><td class="'+(num(c.balance)>=0?'positive':'negative')+'">'+money(c.balance)+'</td><td>'+(c.lastAction||'-')+'</td><td><button class="danger" onclick="deleteCari('+i+')">Sil</button></td></tr>';
+      }
+      document.getElementById('cariBody').innerHTML = html || '<tr><td colspan="4">Kayıt yok.</td></tr>';
     }
 
     function renderInvestments() {
-      document.getElementById('investBody').innerHTML = state.investments.map((inv,i)=>{
-        const rate = state.rates.find(r => r.asset === inv.asset);
-        const current = rate ? n(rate.price) : n(inv.cost);
-        const currentValue = n(inv.amount)*current;
-        const costValue = n(inv.amount)*n(inv.cost);
-        const pnl = currentValue-costValue;
-        return '<tr><td>'+inv.asset+'</td><td>'+inv.amount+'</td><td>'+money(inv.cost)+'</td><td>'+money(current)+'</td><td class="positive">'+money(currentValue)+'</td><td class="'+(pnl>=0?'positive':'negative')+'">'+money(pnl)+'</td><td><button data-del-invest="'+i+'" class="btn-danger">Sil</button></td></tr>';
-      }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
+      var html = '';
+      for (var i=0;i<state.investments.length;i++) {
+        var inv = state.investments[i];
+        var rate = state.rates.find(function(r){ return r.asset === inv.asset; });
+        var current = rate ? num(rate.price) : num(inv.cost);
+        var currentValue = num(inv.amount) * current;
+        var costValue = num(inv.amount) * num(inv.cost);
+        var pnl = currentValue - costValue;
+        html += '<tr><td>'+inv.asset+'</td><td>'+inv.amount+'</td><td>'+money(inv.cost)+'</td><td>'+money(current)+'</td><td class="positive">'+money(currentValue)+'</td><td class="'+(pnl>=0?'positive':'negative')+'">'+money(pnl)+'</td><td><button class="danger" onclick="deleteInvestment('+i+')">Sil</button></td></tr>';
+      }
+      document.getElementById('investBody').innerHTML = html || '<tr><td colspan="7">Kayıt yok.</td></tr>';
     }
 
     function renderRates() {
-      document.getElementById('ratesBody').innerHTML = state.rates.map((r,i)=>
-        '<tr><td>'+r.asset+'</td><td>'+money(r.price)+'</td><td>'+r.source+'</td><td><button data-edit-rate="'+i+'" class="secondary">Düzenle</button></td></tr>'
-      ).join('');
+      var html = '';
+      for (var i=0;i<state.rates.length;i++) {
+        var r = state.rates[i];
+        html += '<tr><td>'+r.asset+'</td><td>'+money(r.price)+'</td><td>'+r.source+'</td></tr>';
+      }
+      document.getElementById('ratesBody').innerHTML = html;
     }
 
     function renderReport() {
-      const month = document.getElementById('reportMonth').value;
-      const tx = state.transactions.filter(x => (x.date||'').startsWith(month));
-      const debt = state.debts.filter(x => (x.due||'').startsWith(month));
-      const income = tx.filter(x => x.type === 'gelir').reduce((a,b)=>a+n(b.amount),0);
-      const expense = Math.abs(tx.filter(x => x.type === 'gider').reduce((a,b)=>a+n(b.amount),0));
-      const transfers = tx.filter(x => x.type === 'transfer').length;
-      const debtTotal = debt.filter(x => x.type === 'borc').reduce((a,b)=>a+n(b.amount),0);
-      const receivableTotal = debt.filter(x => x.type === 'alacak').reduce((a,b)=>a+n(b.amount),0);
-      const p = month.split('-');
+      var month = document.getElementById('reportMonth').value;
+      var income = 0, expense = 0, transfers = 0, debtTotal = 0, receivableTotal = 0;
+      for (var i=0;i<state.transactions.length;i++) {
+        var t = state.transactions[i];
+        if ((t.date||'').startsWith(month)) {
+          if (t.type === 'gelir') income += num(t.amount);
+          if (t.type === 'gider') expense += Math.abs(num(t.amount));
+          if (t.type === 'transfer') transfers += 1;
+        }
+      }
+      for (var j=0;j<state.debts.length;j++) {
+        var d = state.debts[j];
+        if ((d.due||'').startsWith(month)) {
+          if (d.type === 'borc') debtTotal += num(d.amount);
+          if (d.type === 'alacak') receivableTotal += num(d.amount);
+        }
+      }
+      var p = month.split('-');
       document.getElementById('reportBox').innerHTML = 'Seçilen dönem: <strong>'+p[1]+'/'+p[0]+'</strong><br>Gelir: <strong>'+money(income)+'</strong><br>Gider: <strong>'+money(expense)+'</strong><br>Net: <strong>'+money(income-expense)+'</strong><br>Transfer adedi: <strong>'+transfers+'</strong><br>Ay içi borç: <strong>'+money(debtTotal)+'</strong><br>Ay içi alacak: <strong>'+money(receivableTotal)+'</strong>';
     }
 
@@ -348,28 +380,33 @@
     }
 
     function addAccount() {
-      const name = document.getElementById('accountName').value.trim();
-      const type = document.getElementById('accountType').value;
-      const balance = n(document.getElementById('accountBalance').value);
+      var name = document.getElementById('accountName').value.trim();
+      var type = document.getElementById('accountType').value;
+      var balance = num(document.getElementById('accountBalance').value);
       if (!name) { alert('Hesap adı gerekli.'); return; }
-      if (state.accounts.some(a => a.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'))) { alert('Bu hesap zaten var.'); return; }
-      state.accounts.unshift({ id: id(), name: name, type: type, balance: balance });
+      if (state.accounts.some(function(a){ return a.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'); })) { alert('Bu hesap zaten var.'); return; }
+      state.accounts.unshift({ id: gid(), name: name, type: type, balance: balance });
       document.getElementById('accountName').value='';
       document.getElementById('accountBalance').value='';
       renderAll();
     }
 
+    function deleteAccount(i) {
+      state.accounts.splice(i,1);
+      renderAll();
+    }
+
     function addTransaction() {
-      const date = document.getElementById('txDate').value;
-      const type = document.getElementById('txType').value;
-      const category = document.getElementById('txCategory').value.trim();
-      const note = document.getElementById('txNote').value.trim();
-      const amountRaw = n(document.getElementById('txAmount').value);
-      const account = document.getElementById('txAccount').value;
+      var date = document.getElementById('txDate').value;
+      var type = document.getElementById('txType').value;
+      var category = document.getElementById('txCategory').value.trim();
+      var note = document.getElementById('txNote').value.trim();
+      var amountRaw = num(document.getElementById('txAmount').value);
+      var account = document.getElementById('txAccount').value;
       if (!date || !category || !amountRaw || !account) { alert('Lütfen tarih, kategori, tutar ve hesap alanlarını doldur.'); return; }
-      const amount = type === 'gider' ? -Math.abs(amountRaw) : Math.abs(amountRaw);
-      state.transactions.unshift({ id: id(), date: date, type: type, category: category, note: note, amount: amount, account: account });
-      const acc = state.accounts.find(a => a.name === account);
+      var amount = type === 'gider' ? -Math.abs(amountRaw) : Math.abs(amountRaw);
+      state.transactions.unshift({ id: gid(), date: date, type: type, category: category, note: note, amount: amount, account: account });
+      var acc = state.accounts.find(function(a){ return a.name === account; });
       if (acc) acc.balance += amount;
       document.getElementById('txCategory').value='';
       document.getElementById('txNote').value='';
@@ -377,108 +414,104 @@
       renderAll();
     }
 
+    function deleteTransaction(i) {
+      var item = state.transactions[i];
+      if (item && item.type !== 'transfer') {
+        var acc = state.accounts.find(function(a){ return a.name === item.account; });
+        if (acc) acc.balance -= num(item.amount);
+      }
+      state.transactions.splice(i,1);
+      renderAll();
+    }
+
     function addTransfer() {
-      const from = document.getElementById('transferFrom').value;
-      const to = document.getElementById('transferTo').value;
-      const amount = n(document.getElementById('transferAmount').value);
-      const date = document.getElementById('transferDate').value;
+      var from = document.getElementById('transferFrom').value;
+      var to = document.getElementById('transferTo').value;
+      var amount = num(document.getElementById('transferAmount').value);
+      var date = document.getElementById('transferDate').value;
       if (!from || !to || !amount || from===to) { alert('Transfer bilgilerini doğru doldur.'); return; }
-      const a = state.accounts.find(x => x.name === from);
-      const b = state.accounts.find(x => x.name === to);
+      var a = state.accounts.find(function(x){ return x.name === from; });
+      var b = state.accounts.find(function(x){ return x.name === to; });
       if (!a || !b) return;
       a.balance -= amount;
       b.balance += amount;
-      state.transactions.unshift({ id: id(), date: date, type: 'transfer', category: 'Transfer', note: from+' → '+to, amount: 0, account: to });
+      state.transactions.unshift({ id: gid(), date: date, type: 'transfer', category: 'Transfer', note: from+' → '+to, amount: 0, account: to });
       document.getElementById('transferAmount').value='';
       renderAll();
     }
 
-    function addInstallment() {
-      const date = document.getElementById('installmentDate').value || today();
-      const category = document.getElementById('installmentCategory').value.trim();
-      const note = document.getElementById('installmentNote').value.trim();
-      const total = n(document.getElementById('installmentTotal').value);
-      const count = Math.max(1, Math.floor(n(document.getElementById('installmentCount').value)));
-      const account = document.getElementById('installmentAccount').value;
-      if (!category || !total || !count || !account) { alert('Taksit bilgilerini doldur.'); return; }
-      const monthly = Number((total / count).toFixed(2));
-      const start = new Date(date);
-      for (let i=0; i<count; i++) {
-        const d = new Date(start);
-        d.setMonth(d.getMonth()+i);
-        const txDate = d.toISOString().slice(0,10);
-        const isLast = i === count-1;
-        const amount = isLast ? -(Number((total - (monthly * (count - 1))).toFixed(2))) : -monthly;
-        state.transactions.unshift({ id: id(), date: txDate, type: 'gider', category: category, note: (note || 'Taksitli harcama')+' ('+(i+1)+'/'+count+')', amount: amount, account: account });
-      }
-      const acc = state.accounts.find(a => a.name === account);
-      if (acc) acc.balance -= total;
-      document.getElementById('installmentCategory').value='';
-      document.getElementById('installmentNote').value='';
-      document.getElementById('installmentTotal').value='';
-      document.getElementById('installmentCount').value='';
-      renderAll();
-    }
-
     function addDebt() {
-      const name = document.getElementById('debtName').value.trim();
-      const type = document.getElementById('debtType').value;
-      const note = document.getElementById('debtNote').value.trim();
-      const amount = n(document.getElementById('debtAmount').value);
-      const due = document.getElementById('debtDue').value;
-      const status = document.getElementById('debtStatus').value;
+      var name = document.getElementById('debtName').value.trim();
+      var type = document.getElementById('debtType').value;
+      var note = document.getElementById('debtNote').value.trim();
+      var amount = num(document.getElementById('debtAmount').value);
+      var due = document.getElementById('debtDue').value;
       if (!name || !amount || !due) { alert('Lütfen kişi, tutar ve vade alanlarını doldur.'); return; }
-      state.debts.unshift({ id: id(), name: name, type: type, note: note, amount: Math.abs(amount), due: due, status: status });
+      state.debts.unshift({ id: gid(), name: name, type: type, note: note, amount: Math.abs(amount), due: due });
       document.getElementById('debtName').value='';
       document.getElementById('debtNote').value='';
       document.getElementById('debtAmount').value='';
       renderAll();
     }
 
-    function addCustomer() {
-      const name = document.getElementById('cariName').value.trim();
-      const type = document.getElementById('cariType').value;
-      const amount = n(document.getElementById('cariAmount').value);
-      const note = document.getElementById('cariNote').value.trim();
-      const date = document.getElementById('cariDate').value;
+    function deleteDebt(i) {
+      state.debts.splice(i,1);
+      renderAll();
+    }
+
+    function addCari() {
+      var name = document.getElementById('cariName').value.trim();
+      var type = document.getElementById('cariType').value;
+      var amount = num(document.getElementById('cariAmount').value);
+      var note = document.getElementById('cariNote').value.trim();
+      var date = document.getElementById('cariDate').value;
       if (!name || !amount || !date) { alert('Lütfen cari adı, tutar ve tarih alanlarını doldur.'); return; }
-      let delta = 0;
+      var delta = 0;
       if (type === 'alacaklandir') delta = Math.abs(amount);
       if (type === 'tahsilat') delta = -Math.abs(amount);
       if (type === 'borclu') delta = -Math.abs(amount);
       if (type === 'odeme') delta = Math.abs(amount);
-      let c = state.customers.find(x => x.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'));
-      if (!c) { c = { id: id(), name: name, balance: 0, lastAction: '', history: [] }; state.customers.unshift(c); }
+      var c = state.customers.find(function(x){ return x.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'); });
+      if (!c) { c = { id: gid(), name: name, balance: 0, lastAction: '' }; state.customers.unshift(c); }
       c.balance += delta;
       c.lastAction = date + ' - ' + (note || type);
-      c.history.unshift({ id: id(), date: date, type: type, note: note, amount: Math.abs(amount) });
       document.getElementById('cariName').value='';
       document.getElementById('cariAmount').value='';
       document.getElementById('cariNote').value='';
       renderAll();
     }
 
+    function deleteCari(i) {
+      state.customers.splice(i,1);
+      renderAll();
+    }
+
     function addInvestment() {
-      const asset = document.getElementById('investAsset').value;
-      const amount = n(document.getElementById('investAmount').value);
-      const cost = n(document.getElementById('investCost').value);
+      var asset = document.getElementById('investAsset').value;
+      var amount = num(document.getElementById('investAmount').value);
+      var cost = num(document.getElementById('investCost').value);
       if (!asset || !amount || !cost) { alert('Lütfen yatırım bilgilerini doldur.'); return; }
-      state.investments.unshift({ id: id(), asset: asset, amount: amount, cost: cost });
+      state.investments.unshift({ id: gid(), asset: asset, amount: amount, cost: cost });
       document.getElementById('investAmount').value='';
       document.getElementById('investCost').value='';
       renderAll();
     }
 
+    function deleteInvestment(i) {
+      state.investments.splice(i,1);
+      renderAll();
+    }
+
     async function fetchRates() {
-      const urls = [
+      var urls = [
         'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.tcmb.gov.tr/kurlar/today.xml'),
         'https://cors.isomorphic-git.org/https://www.tcmb.gov.tr/kurlar/today.xml',
         'https://www.tcmb.gov.tr/kurlar/today.xml'
       ];
-      let text = '';
-      for (const url of urls) {
+      var text = '';
+      for (var i=0;i<urls.length;i++) {
         try {
-          const res = await fetch(url, { cache: 'no-store' });
+          var res = await fetch(urls[i], { cache: 'no-store' });
           if (!res.ok) continue;
           text = await res.text();
           if (text.indexOf('CurrencyCode') !== -1) break;
@@ -486,40 +519,40 @@
       }
       if (!text) { alert('Canlı kur alınamadı. Manuel giriş kullanabilirsin.'); return; }
       try {
-        const xml = new DOMParser().parseFromString(text, 'application/xml');
-        const nodes = Array.from(xml.querySelectorAll('Currency'));
-        const usd = nodes.find(x => x.getAttribute('CurrencyCode') === 'USD');
-        const eur = nodes.find(x => x.getAttribute('CurrencyCode') === 'EUR');
-        const usdText = (usd && (usd.querySelector('ForexSelling')?.textContent || usd.querySelector('BanknoteSelling')?.textContent || '0')) || '0';
-        const eurText = (eur && (eur.querySelector('ForexSelling')?.textContent || eur.querySelector('BanknoteSelling')?.textContent || '0')) || '0';
-        const usdPrice = Number(usdText.replace(',', '.'));
-        const eurPrice = Number(eurText.replace(',', '.'));
-        const usdRate = state.rates.find(r => r.asset === 'Dolar');
-        const eurRate = state.rates.find(r => r.asset === 'Euro');
-        if (usdRate && usdPrice) { usdRate.price = usdPrice; usdRate.source = 'TCMB'; }
-        if (eurRate && eurPrice) { eurRate.price = eurPrice; eurRate.source = 'TCMB'; }
+        var xml = new DOMParser().parseFromString(text, 'application/xml');
+        var nodes = Array.from(xml.querySelectorAll('Currency'));
+        var usd = nodes.find(function(x){ return x.getAttribute('CurrencyCode') === 'USD'; });
+        var eur = nodes.find(function(x){ return x.getAttribute('CurrencyCode') === 'EUR'; });
+        var usdText = (usd && ((usd.querySelector('ForexSelling') && usd.querySelector('ForexSelling').textContent) || (usd.querySelector('BanknoteSelling') && usd.querySelector('BanknoteSelling').textContent) || '0')) || '0';
+        var eurText = (eur && ((eur.querySelector('ForexSelling') && eur.querySelector('ForexSelling').textContent) || (eur.querySelector('BanknoteSelling') && eur.querySelector('BanknoteSelling').textContent) || '0')) || '0';
+        var usdPrice = Number(usdText.replace(',', '.'));
+        var eurPrice = Number(eurText.replace(',', '.'));
+        for (var j=0;j<state.rates.length;j++) {
+          if (state.rates[j].asset === 'Dolar' && usdPrice) { state.rates[j].price = usdPrice; state.rates[j].source = 'TCMB'; }
+          if (state.rates[j].asset === 'Euro' && eurPrice) { state.rates[j].price = eurPrice; state.rates[j].source = 'TCMB'; }
+        }
         renderAll();
         alert('USD ve EUR güncellendi.');
-      } catch (e) {
+      } catch (err) {
         alert('Kur verisi çözümlenemedi.');
       }
     }
 
-    function editAllRates() {
-      state.rates.forEach((r) => {
-        const v = prompt(r.asset + ' fiyatı', r.price || 0);
+    function editRates() {
+      for (var i=0;i<state.rates.length;i++) {
+        var v = prompt(state.rates[i].asset + ' fiyatı', state.rates[i].price || 0);
         if (v !== null && v !== '') {
-          r.price = n(v);
-          r.source = (r.asset === 'Altın' || r.asset === 'Gümüş') ? 'Manuel (Gram/TL)' : 'Manuel';
+          state.rates[i].price = num(v);
+          state.rates[i].source = (state.rates[i].asset === 'Altın' || state.rates[i].asset === 'Gümüş') ? 'Manuel (Gram/TL)' : 'Manuel';
         }
-      });
+      }
       renderAll();
     }
 
     function downloadJson() {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
       a.href = url;
       a.download = 'hesap-takip-yedek.json';
       a.click();
@@ -527,18 +560,18 @@
     }
 
     function uploadJson(event) {
-      const file = event.target.files[0];
+      var file = event.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
+      var reader = new FileReader();
       reader.onload = function(e) {
         try {
-          const data = JSON.parse(e.target.result);
-          state.accounts = Array.isArray(data.accounts) && data.accounts.length ? data.accounts : state.accounts;
-          state.transactions = Array.isArray(data.transactions) ? data.transactions : [];
-          state.debts = Array.isArray(data.debts) ? data.debts : [];
-          state.customers = Array.isArray(data.customers) ? data.customers : [];
-          state.investments = Array.isArray(data.investments) ? data.investments : [];
-          state.rates = Array.isArray(data.rates) && data.rates.length ? data.rates : state.rates;
+          var data = JSON.parse(e.target.result);
+          if (Array.isArray(data.accounts) && data.accounts.length) state.accounts = data.accounts;
+          if (Array.isArray(data.transactions)) state.transactions = data.transactions;
+          if (Array.isArray(data.debts)) state.debts = data.debts;
+          if (Array.isArray(data.customers)) state.customers = data.customers;
+          if (Array.isArray(data.investments)) state.investments = data.investments;
+          if (Array.isArray(data.rates) && data.rates.length) state.rates = data.rates;
           renderAll();
           alert('Veriler içe aktarıldı.');
         } catch (err) {
@@ -555,83 +588,8 @@
       location.reload();
     }
 
-    function bindTabs() {
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
-          document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
-          btn.classList.add('active');
-          const panel = document.getElementById(btn.getAttribute('data-tab'));
-          if (panel) panel.classList.add('active');
-        });
-      });
-    }
-
-    function bindButtons() {
-      document.getElementById('darkModeBtn').addEventListener('click', function() {
-        document.body.classList.toggle('dark');
-        localStorage.setItem(THEME_KEY, document.body.classList.contains('dark') ? 'dark' : 'light');
-      });
-      document.getElementById('backupBtn').addEventListener('click', downloadJson);
-      document.getElementById('restoreBtn').addEventListener('click', function(){ document.getElementById('restoreFile').click(); });
-      document.getElementById('restoreFile').addEventListener('change', uploadJson);
-      document.getElementById('resetBtn').addEventListener('click', resetAll);
-      document.getElementById('addAccountBtn').addEventListener('click', addAccount);
-      document.getElementById('addTransactionBtn').addEventListener('click', addTransaction);
-      document.getElementById('addTransferBtn').addEventListener('click', addTransfer);
-      document.getElementById('addInstallmentBtn').addEventListener('click', addInstallment);
-      document.getElementById('addDebtBtn').addEventListener('click', addDebt);
-      document.getElementById('addCustomerBtn').addEventListener('click', addCustomer);
-      document.getElementById('addInvestmentBtn').addEventListener('click', addInvestment);
-      document.getElementById('fetchRatesBtn').addEventListener('click', fetchRates);
-      document.getElementById('editRatesBtn').addEventListener('click', editAllRates);
-      document.getElementById('reportBtn').addEventListener('click', renderReport);
-    }
-
-    function bindTableClicks() {
-      document.body.addEventListener('click', function(e) {
-        const t = e.target;
-        if (!(t instanceof HTMLElement)) return;
-        if (t.dataset.delAccount !== undefined) {
-          state.accounts.splice(Number(t.dataset.delAccount),1); renderAll();
-        }
-        if (t.dataset.delTx !== undefined) {
-          const i = Number(t.dataset.delTx);
-          const item = state.transactions[i];
-          if (item && item.type !== 'transfer') {
-            const acc = state.accounts.find(a => a.name === item.account);
-            if (acc) acc.balance -= n(item.amount);
-          }
-          state.transactions.splice(i,1); renderAll();
-        }
-        if (t.dataset.delDebt !== undefined) {
-          state.debts.splice(Number(t.dataset.delDebt),1); renderAll();
-        }
-        if (t.dataset.delCari !== undefined) {
-          state.customers.splice(Number(t.dataset.delCari),1); renderAll();
-        }
-        if (t.dataset.delInvest !== undefined) {
-          state.investments.splice(Number(t.dataset.delInvest),1); renderAll();
-        }
-        if (t.dataset.editRate !== undefined) {
-          const i = Number(t.dataset.editRate);
-          const r = state.rates[i];
-          const v = prompt(r.asset + ' fiyatı', r.price || 0);
-          if (v !== null && v !== '') {
-            r.price = n(v);
-            r.source = (r.asset === 'Altın' || r.asset === 'Gümüş') ? 'Manuel (Gram/TL)' : 'Manuel';
-            renderAll();
-          }
-        }
-      });
-    }
-
     load();
-    applyTheme();
     setDefaults();
-    bindTabs();
-    bindButtons();
-    bindTableClicks();
     renderAll();
   </script>
 </body>
