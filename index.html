@@ -102,6 +102,25 @@
       cursor: pointer;
       border: none;
     }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-danger {
+      background: #b91c1c;
+      color: white;
+    }
+    .inline-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .inline-actions button {
+      width: auto;
+      padding: 8px 10px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
     button:hover { opacity: 0.95; }
     .muted { color: #6b7280; }
     .two-col {
@@ -113,6 +132,7 @@
       .two-col { grid-template-columns: 1fr; }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
@@ -120,6 +140,28 @@
     <p class="muted">Gelir, gider, borç/alacak ve hesap bakiyelerini tek sayfada takip et.</p>
 
     <div class="grid" id="ozetKartlari"></div>
+
+    <div class="section">
+      <div class="form-box">
+        <h2>Cari Takip</h2>
+        <p class="muted">Aynı isimle eklenen cari kayıtlar otomatik birleşir ve tek bakiye altında toplanır.</p>
+        <div class="form-grid">
+          <input type="text" id="cariAd" placeholder="Cari adı" />
+          <select id="cariIslemTipi">
+            <option value="borclu">Borçlandır</option>
+            <option value="tahsilat">Tahsilat</option>
+            <option value="odeme">Ödeme</option>
+            <option value="alacaklandir">Alacaklandır</option>
+          </select>
+          <input type="number" id="cariTutar" placeholder="Tutar" />
+          <input type="text" id="cariAciklama" placeholder="Açıklama" />
+          <input type="date" id="cariTarih" />
+        </div>
+        <div style="margin-top:12px;">
+          <button onclick="cariHareketEkle()">Cari Hareket Ekle</button>
+        </div>
+      </div>
+    </div>
 
     <div class="section two-col">
       <div class="form-box">
@@ -179,6 +221,7 @@
             <th>Açıklama</th>
             <th>Tutar</th>
             <th>Hesap</th>
+            <th>İşlem</th>
           </tr>
         </thead>
         <tbody id="hareketlerTablo"></tbody>
@@ -196,22 +239,125 @@
             <th>Tutar</th>
             <th>Vade</th>
             <th>Durum</th>
+            <th>İşlem</th>
           </tr>
         </thead>
         <tbody id="borclarTablo"></tbody>
       </table>
     </div>
 
+    <div class="section two-col">
+      <div class="form-box">
+        <h2>Yeni Hesap Ekle</h2>
+        <div class="form-grid">
+          <input type="text" id="yeniHesapAdi" placeholder="Hesap adı" />
+          <select id="yeniHesapTipi">
+            <option value="Nakit">Nakit</option>
+            <option value="Banka">Banka</option>
+            <option value="Kredi Kartı">Kredi Kartı</option>
+            <option value="Dijital Cüzdan">Dijital Cüzdan</option>
+          </select>
+          <input type="number" id="yeniHesapBakiye" placeholder="Başlangıç bakiyesi" />
+        </div>
+        <div style="margin-top:12px;">
+          <button onclick="hesapEkle()">Hesap Ekle</button>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h2>Hesaplar</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Hesap</th>
+              <th>Tip</th>
+              <th>Bakiye</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="hesaplarTablo"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="section">
-      <h2>Hesaplar</h2>
+      <div class="form-box">
+        <h2>Yatırım Takibi</h2>
+        <p class="muted">Altın, gümüş, dolar ve euro varlıklarını takip et. Kurları manuel güncelleyebilirsin.</p>
+        <div class="form-grid">
+          <select id="yatirimVarlik">
+            <option value="Altın">Altın</option>
+            <option value="Gümüş">Gümüş</option>
+            <option value="Dolar">Dolar</option>
+            <option value="Euro">Euro</option>
+          </select>
+          <input type="number" id="yatirimMiktar" placeholder="Miktar" />
+          <input type="number" id="yatirimBirimFiyat" placeholder="Birim fiyat" />
+        </div>
+        <div style="margin-top:12px;" class="inline-actions">
+          <button onclick="yatirimEkle()">Yatırım Ekle</button>
+          <button class="btn-secondary" onclick="kurGuncelle()">Kurları Güncelle</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Yatırım Listesi</h2>
       <table>
         <thead>
           <tr>
-            <th>Hesap</th>
-            <th>Bakiye</th>
+            <th>Varlık</th>
+            <th>Miktar</th>
+            <th>Birim Fiyat</th>
+            <th>Toplam Değer</th>
+            <th>İşlem</th>
           </tr>
         </thead>
-        <tbody id="hesaplarTablo"></tbody>
+        <tbody id="yatirimlarTablo"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Kur Ekranı</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Varlık</th>
+            <th>Güncel Kur / Fiyat</th>
+            <th>Kaynak</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+        <tbody id="kurlarTablo"></tbody>
+      </table>
+      <div style="margin-top:12px;" class="inline-actions">
+        <button onclick="canliKurlariGetir()">Canlı Kurları Çek</button>
+      </div>
+    </div>
+
+    <div class="section two-col">
+      <div class="form-box">
+        <h2>Varlık Dağılımı</h2>
+        <canvas id="yatirimDagilimGrafigi" height="220"></canvas>
+      </div>
+      <div class="form-box">
+        <h2>Nakit / Borç Özeti</h2>
+        <canvas id="finansOzetGrafigi" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Cari Listesi</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Cari</th>
+            <th>Bakiye</th>
+            <th>Son İşlem</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+        <tbody id="carilerTablo"></tbody>
       </table>
     </div>
   </div>
@@ -228,11 +374,39 @@
       { kisi: 'Banka', tip: 'borc', aciklama: 'Kredi kartı ekstresi', tutar: 5400, vade: '2026-04-15', durum: 'Ödenecek' }
     ];
 
-    const hesaplar = [
-      { hesap: 'Nakit', bakiye: 1250 },
-      { hesap: 'Banka', bakiye: 26000 },
-      { hesap: 'Kredi Kartı', bakiye: -5400 }
+    const yatirimlar = [
+      { varlik: 'Altın', miktar: 10, birimFiyat: 2450 },
+      { varlik: 'Dolar', miktar: 300, birimFiyat: 38.2 }
     ];
+
+    const kurlar = [
+      { varlik: 'Altın', fiyat: 2450, kaynak: 'Manuel' },
+      { varlik: 'Gümüş', fiyat: 32.5, kaynak: 'Manuel' },
+      { varlik: 'Dolar', fiyat: 38.2, kaynak: 'Manuel' },
+      { varlik: 'Euro', fiyat: 41.7, kaynak: 'Manuel' }
+    ];
+
+    let yatirimDagilimChart = null;
+    let finansOzetChart = null;
+
+    const cariler = [
+      { ad: 'Ahmet', bakiye: 2000, sonIslem: '2026-04-01 - Borç verdim', hareketler: [
+        { tarih: '2026-04-01', tip: 'alacaklandir', tutar: 2000, aciklama: 'Borç verdim' }
+      ] }
+    ];
+
+    const hesaplar = [
+      { hesap: 'Nakit', tip: 'Nakit', bakiye: 1250 },
+      { hesap: 'Banka', tip: 'Banka', bakiye: 26000 },
+      { hesap: 'Kredi Kartı', tip: 'Kredi Kartı', bakiye: -5400 }
+    ];
+
+    function formTemizle() {
+      ['kategori', 'aciklama', 'tutar', 'kisi', 'borcAciklama', 'borcTutar', 'yeniHesapAdi', 'yeniHesapBakiye', 'cariAd', 'cariTutar', 'cariAciklama', 'yatirimMiktar', 'yatirimBirimFiyat'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
 
     function paraYazdir(tutar) {
       return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(tutar);
@@ -244,6 +418,12 @@
       const netDurum = toplamGelir - toplamGider;
       const toplamBorc = borclar.filter(x => x.tip === 'borc' && x.durum !== 'Ödendi').reduce((a, b) => a + b.tutar, 0);
       const toplamAlacak = borclar.filter(x => x.tip === 'alacak' && x.durum !== 'Tahsil Edildi').reduce((a, b) => a + b.tutar, 0);
+      const toplamCariAlacak = cariler.filter(x => x.bakiye > 0).reduce((a, b) => a + b.bakiye, 0);
+      const toplamCariBorc = Math.abs(cariler.filter(x => x.bakiye < 0).reduce((a, b) => a + b.bakiye, 0));
+      const toplamBanka = hesaplar.filter(x => x.tip === 'Banka').reduce((a, b) => a + b.bakiye, 0);
+      const toplamNakit = hesaplar.filter(x => x.tip === 'Nakit').reduce((a, b) => a + b.bakiye, 0);
+      const toplamKart = Math.abs(hesaplar.filter(x => x.tip === 'Kredi Kartı').reduce((a, b) => a + b.bakiye, 0));
+      const toplamYatirim = yatirimlar.reduce((a, b) => a + (b.miktar * b.birimFiyat), 0);
 
       document.getElementById('ozetKartlari').innerHTML = `
         <div class="card"><small>Toplam Gelir</small><div class="value positive">${paraYazdir(toplamGelir)}</div></div>
@@ -251,11 +431,17 @@
         <div class="card"><small>Net Durum</small><div class="value ${netDurum >= 0 ? 'positive' : 'negative'}">${paraYazdir(netDurum)}</div></div>
         <div class="card"><small>Toplam Borç</small><div class="value negative">${paraYazdir(toplamBorc)}</div></div>
         <div class="card"><small>Toplam Alacak</small><div class="value positive">${paraYazdir(toplamAlacak)}</div></div>
+        <div class="card"><small>Toplam Cari Alacak</small><div class="value positive">${paraYazdir(toplamCariAlacak)}</div></div>
+        <div class="card"><small>Toplam Cari Borç</small><div class="value negative">${paraYazdir(toplamCariBorc)}</div></div>
+        <div class="card"><small>Toplam Banka</small><div class="value ${toplamBanka >= 0 ? 'positive' : 'negative'}">${paraYazdir(toplamBanka)}</div></div>
+        <div class="card"><small>Toplam Nakit</small><div class="value ${toplamNakit >= 0 ? 'positive' : 'negative'}">${paraYazdir(toplamNakit)}</div></div>
+        <div class="card"><small>Toplam Kart Borcu</small><div class="value negative">${paraYazdir(toplamKart)}</div></div>
+        <div class="card"><small>Toplam Yatırım</small><div class="value positive">${paraYazdir(toplamYatirim)}</div></div>
       `;
     }
 
     function hareketleriGoster() {
-      document.getElementById('hareketlerTablo').innerHTML = hareketler.map(h => `
+      document.getElementById('hareketlerTablo').innerHTML = hareketler.map((h, index) => `
         <tr>
           <td>${h.tarih}</td>
           <td><span class="badge ${h.tur === 'gelir' ? 'badge-gelir' : 'badge-gider'}">${h.tur}</span></td>
@@ -263,12 +449,18 @@
           <td>${h.aciklama}</td>
           <td class="${h.tutar >= 0 ? 'positive' : 'negative'}">${paraYazdir(h.tutar)}</td>
           <td>${h.hesap}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn-secondary" onclick="hareketDuzenle(${index})">Düzenle</button>
+              <button class="btn-danger" onclick="hareketSil(${index})">Sil</button>
+            </div>
+          </td>
         </tr>
       `).join('');
     }
 
     function borclariGoster() {
-      document.getElementById('borclarTablo').innerHTML = borclar.map(b => `
+      document.getElementById('borclarTablo').innerHTML = borclar.map((b, index) => `
         <tr>
           <td>${b.kisi}</td>
           <td><span class="badge ${b.tip === 'borc' ? 'badge-borc' : 'badge-alacak'}">${b.tip}</span></td>
@@ -276,15 +468,167 @@
           <td>${paraYazdir(b.tutar)}</td>
           <td>${b.vade}</td>
           <td>${b.durum}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn-secondary" onclick="borcDuzenle(${index})">Düzenle</button>
+              <button class="btn-danger" onclick="borcSil(${index})">Sil</button>
+            </div>
+          </td>
         </tr>
       `).join('');
     }
 
     function hesaplariGoster() {
-      document.getElementById('hesaplarTablo').innerHTML = hesaplar.map(h => `
+      document.getElementById('hesaplarTablo').innerHTML = hesaplar.map((h, index) => `
         <tr>
           <td>${h.hesap}</td>
+          <td>${h.tip}</td>
           <td class="${h.bakiye >= 0 ? 'positive' : 'negative'}">${paraYazdir(h.bakiye)}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn-secondary" onclick="hesapDuzenle(${index})">Düzenle</button>
+              <button class="btn-danger" onclick="hesapSil(${index})">Sil</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function yatirimlariGoster() {
+      document.getElementById('yatirimlarTablo').innerHTML = yatirimlar.map((y, index) => `
+        <tr>
+          <td>${y.varlik}</td>
+          <td>${y.miktar}</td>
+          <td>${paraYazdir(y.birimFiyat)}</td>
+          <td class="positive">${paraYazdir(y.miktar * y.birimFiyat)}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn-secondary" onclick="yatirimDuzenle(${index})">Düzenle</button>
+              <button class="btn-danger" onclick="yatirimSil(${index})">Sil</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function kurlariGoster() {
+      document.getElementById('kurlarTablo').innerHTML = kurlar.map((k, index) => `
+        <tr>
+          <td>${k.varlik}</td>
+          <td>${paraYazdir(k.fiyat)}</td>
+          <td>${k.kaynak || 'Manuel'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn-secondary" onclick="tekKurDuzenle(${index})">Düzenle</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function grafikleriGuncelle() {
+      const yatirimEtiketleri = yatirimlar.map(x => x.varlik);
+      const yatirimDegerleri = yatirimlar.map(x => Number((x.miktar * x.birimFiyat).toFixed(2)));
+      const finansEtiketleri = ['Banka', 'Nakit', 'Kart Borcu', 'Cari Alacak', 'Cari Borç'];
+      const finansDegerleri = [
+        hesaplar.filter(x => x.tip === 'Banka').reduce((a, b) => a + b.bakiye, 0),
+        hesaplar.filter(x => x.tip === 'Nakit').reduce((a, b) => a + b.bakiye, 0),
+        Math.abs(hesaplar.filter(x => x.tip === 'Kredi Kartı').reduce((a, b) => a + b.bakiye, 0)),
+        cariler.filter(x => x.bakiye > 0).reduce((a, b) => a + b.bakiye, 0),
+        Math.abs(cariler.filter(x => x.bakiye < 0).reduce((a, b) => a + b.bakiye, 0))
+      ];
+
+      if (yatirimDagilimChart) yatirimDagilimChart.destroy();
+      if (finansOzetChart) finansOzetChart.destroy();
+
+      const yatirimCtx = document.getElementById('yatirimDagilimGrafigi');
+      const finansCtx = document.getElementById('finansOzetGrafigi');
+      if (!yatirimCtx || !finansCtx) return;
+
+      yatirimDagilimChart = new Chart(yatirimCtx, {
+        type: 'doughnut',
+        data: {
+          labels: yatirimEtiketleri.length ? yatirimEtiketleri : ['Veri yok'],
+          datasets: [{ data: yatirimDegerleri.length ? yatirimDegerleri : [1] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      finansOzetChart = new Chart(finansCtx, {
+        type: 'bar',
+        data: {
+          labels: finansEtiketleri,
+          datasets: [{ label: 'Tutar', data: finansDegerleri }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    async function canliKurlariGetir() {
+      try {
+        const [tcmbText, goldRes, silverRes] = await Promise.all([
+          fetch('https://www.tcmb.gov.tr/kurlar/today.xml').then(r => r.text()),
+          fetch('https://api.gold-api.com/price/XAU').then(r => r.json()),
+          fetch('https://api.gold-api.com/price/XAG').then(r => r.json())
+        ]);
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(tcmbText, 'application/xml');
+        const currencies = Array.from(xml.querySelectorAll('Currency'));
+        const usdNode = currencies.find(x => x.getAttribute('CurrencyCode') === 'USD');
+        const eurNode = currencies.find(x => x.getAttribute('CurrencyCode') === 'EUR');
+        const usdTry = usdNode ? Number((usdNode.querySelector('ForexSelling')?.textContent || usdNode.querySelector('BanknoteSelling')?.textContent || '0').replace(',', '.')) : 0;
+        const eurTry = eurNode ? Number((eurNode.querySelector('ForexSelling')?.textContent || eurNode.querySelector('BanknoteSelling')?.textContent || '0').replace(',', '.')) : 0;
+
+        const altinUsdOns = Number(goldRes.price || 0);
+        const gumusUsdOns = Number(silverRes.price || 0);
+        const altinGramTry = usdTry && altinUsdOns ? (altinUsdOns / 31.1035) * usdTry : 0;
+        const gumusGramTry = usdTry && gumusUsdOns ? (gumusUsdOns / 31.1035) * usdTry : 0;
+
+        kurlar.forEach(kur => {
+          if (kur.varlik === 'Dolar' && usdTry) {
+            kur.fiyat = usdTry;
+            kur.kaynak = 'TCMB';
+          }
+          if (kur.varlik === 'Euro' && eurTry) {
+            kur.fiyat = eurTry;
+            kur.kaynak = 'TCMB';
+          }
+          if (kur.varlik === 'Altın' && altinGramTry) {
+            kur.fiyat = Number(altinGramTry.toFixed(2));
+            kur.kaynak = 'gold-api';
+          }
+          if (kur.varlik === 'Gümüş' && gumusGramTry) {
+            kur.fiyat = Number(gumusGramTry.toFixed(2));
+            kur.kaynak = 'gold-api';
+          }
+        });
+
+        yatirimlar.forEach(yatirim => {
+          const eslesenKur = kurlar.find(k => k.varlik === yatirim.varlik);
+          if (eslesenKur) yatirim.birimFiyat = eslesenKur.fiyat;
+        });
+
+        guncelle();
+        alert('Canlı kurlar güncellendi.');
+      } catch (error) {
+        console.error(error);
+        alert('Canlı kurlar alınamadı. İnternet erişimi, CORS veya API yanıtı kontrol edilmeli.');
+      }
+    }
+
+    function carileriGoster() {
+      document.getElementById('carilerTablo').innerHTML = cariler.map((c, index) => `
+        <tr>
+          <td>${c.ad}</td>
+          <td class="${c.bakiye >= 0 ? 'positive' : 'negative'}">${paraYazdir(c.bakiye)}</td>
+          <td>${c.sonIslem || '-'}</td>
+          <td>
+            <div class="inline-actions">
+              <button class="btn-secondary" onclick="cariDuzenle(${index})">Düzenle</button>
+              <button class="btn-danger" onclick="cariSil(${index})">Sil</button>
+            </div>
+          </td>
         </tr>
       `).join('');
     }
@@ -303,9 +647,44 @@
       hareketler.unshift({ tarih, tur, kategori, aciklama, tutar, hesap });
 
       const hesapKaydi = hesaplar.find(h => h.hesap === hesap);
-      if (hesapKaydi) {
-        hesapKaydi.bakiye += tutar;
-      }
+      if (hesapKaydi) hesapKaydi.bakiye += tutar;
+
+      formTemizle();
+      verileriYukle();
+    guncelle();
+    }
+
+    function hareketSil(index) {
+      const kayit = hareketler[index];
+      const hesapKaydi = hesaplar.find(h => h.hesap === kayit.hesap);
+      if (hesapKaydi) hesapKaydi.bakiye -= kayit.tutar;
+      hareketler.splice(index, 1);
+      guncelle();
+    }
+
+    function hareketDuzenle(index) {
+      const kayit = hareketler[index];
+      const yeniTarih = prompt('Tarih', kayit.tarih);
+      const yeniKategori = prompt('Kategori', kayit.kategori);
+      const yeniAciklama = prompt('Açıklama', kayit.aciklama);
+      const yeniTutarHam = prompt('Tutar', Math.abs(kayit.tutar));
+      const yeniTur = prompt('Tür (gelir/gider)', kayit.tur);
+      const yeniHesap = prompt('Hesap', kayit.hesap);
+
+      if (!yeniTarih || !yeniKategori || !yeniAciklama || !yeniTutarHam || !yeniTur || !yeniHesap) return;
+
+      const eskiHesap = hesaplar.find(h => h.hesap === kayit.hesap);
+      if (eskiHesap) eskiHesap.bakiye -= kayit.tutar;
+
+      kayit.tarih = yeniTarih;
+      kayit.kategori = yeniKategori;
+      kayit.aciklama = yeniAciklama;
+      kayit.tur = yeniTur;
+      kayit.hesap = yeniHesap;
+      kayit.tutar = yeniTur === 'gider' ? -Math.abs(Number(yeniTutarHam)) : Math.abs(Number(yeniTutarHam));
+
+      const yeniHesapKaydi = hesaplar.find(h => h.hesap === kayit.hesap);
+      if (yeniHesapKaydi) yeniHesapKaydi.bakiye += kayit.tutar;
 
       guncelle();
     }
@@ -321,7 +700,203 @@
       if (!kisi || !aciklama || !tutar || !vade) return alert('Lütfen tüm alanları doldur.');
 
       borclar.unshift({ kisi, tip, aciklama, tutar: Math.abs(tutar), vade, durum });
+      formTemizle();
       guncelle();
+    }
+
+    function borcSil(index) {
+      borclar.splice(index, 1);
+      guncelle();
+    }
+
+    function borcDuzenle(index) {
+      const kayit = borclar[index];
+      const yeniKisi = prompt('Kişi / Kurum', kayit.kisi);
+      const yeniTip = prompt('Tip (borc/alacak)', kayit.tip);
+      const yeniAciklama = prompt('Açıklama', kayit.aciklama);
+      const yeniTutar = prompt('Tutar', kayit.tutar);
+      const yeniVade = prompt('Vade', kayit.vade);
+      const yeniDurum = prompt('Durum', kayit.durum);
+
+      if (!yeniKisi || !yeniTip || !yeniAciklama || !yeniTutar || !yeniVade || !yeniDurum) return;
+
+      kayit.kisi = yeniKisi;
+      kayit.tip = yeniTip;
+      kayit.aciklama = yeniAciklama;
+      kayit.tutar = Math.abs(Number(yeniTutar));
+      kayit.vade = yeniVade;
+      kayit.durum = yeniDurum;
+      guncelle();
+    }
+
+    function hesapEkle() {
+      const hesap = document.getElementById('yeniHesapAdi').value;
+      const tip = document.getElementById('yeniHesapTipi').value;
+      const bakiye = Number(document.getElementById('yeniHesapBakiye').value);
+
+      if (!hesap || Number.isNaN(bakiye)) return alert('Lütfen hesap bilgilerini doldur.');
+      hesaplar.unshift({ hesap, tip, bakiye });
+      formTemizle();
+      guncelle();
+    }
+
+    function cariHareketEkle() {
+      const ad = document.getElementById('cariAd').value.trim();
+      const islemTipi = document.getElementById('cariIslemTipi').value;
+      const tutar = Number(document.getElementById('cariTutar').value);
+      const aciklama = document.getElementById('cariAciklama').value.trim();
+      const tarih = document.getElementById('cariTarih').value;
+
+      if (!ad || !tutar || !tarih) return alert('Lütfen cari bilgilerini doldur.');
+
+      let bakiyeEtkisi = 0;
+      if (islemTipi === 'alacaklandir') bakiyeEtkisi = Math.abs(tutar);
+      if (islemTipi === 'tahsilat') bakiyeEtkisi = -Math.abs(tutar);
+      if (islemTipi === 'borclu') bakiyeEtkisi = -Math.abs(tutar);
+      if (islemTipi === 'odeme') bakiyeEtkisi = Math.abs(tutar);
+
+      let cari = cariler.find(c => c.ad.toLocaleLowerCase('tr-TR') === ad.toLocaleLowerCase('tr-TR'));
+      if (!cari) {
+        cari = { ad, bakiye: 0, sonIslem: '', hareketler: [] };
+        cariler.unshift(cari);
+      }
+
+      cari.bakiye += bakiyeEtkisi;
+      cari.sonIslem = `${tarih} - ${aciklama || islemTipi}`;
+      cari.hareketler.unshift({ tarih, tip: islemTipi, tutar: Math.abs(tutar), aciklama: aciklama || islemTipi });
+
+      formTemizle();
+      guncelle();
+    }
+
+    function yatirimEkle() {
+      const varlik = document.getElementById('yatirimVarlik').value;
+      const miktar = Number(document.getElementById('yatirimMiktar').value);
+      const girilenFiyat = Number(document.getElementById('yatirimBirimFiyat').value);
+      const kurKaydi = kurlar.find(k => k.varlik === varlik);
+      const birimFiyat = girilenFiyat || (kurKaydi ? kurKaydi.fiyat : 0);
+
+      if (!varlik || !miktar || !birimFiyat) return alert('Lütfen yatırım bilgilerini doldur.');
+      yatirimlar.unshift({ varlik, miktar, birimFiyat });
+      formTemizle();
+      guncelle();
+    }
+
+    function yatirimSil(index) {
+      yatirimlar.splice(index, 1);
+      guncelle();
+    }
+
+    function yatirimDuzenle(index) {
+      const kayit = yatirimlar[index];
+      const yeniVarlik = prompt('Varlık', kayit.varlik);
+      const yeniMiktar = prompt('Miktar', kayit.miktar);
+      const yeniFiyat = prompt('Birim fiyat', kayit.birimFiyat);
+      if (!yeniVarlik || !yeniMiktar || !yeniFiyat) return;
+      kayit.varlik = yeniVarlik;
+      kayit.miktar = Number(yeniMiktar);
+      kayit.birimFiyat = Number(yeniFiyat);
+      guncelle();
+    }
+
+    function tekKurDuzenle(index) {
+      const kayit = kurlar[index];
+      const yeniFiyat = prompt(`${kayit.varlik} fiyatı`, kayit.fiyat);
+      if (!yeniFiyat) return;
+      kayit.fiyat = Number(yeniFiyat);
+      kayit.kaynak = 'Manuel';
+      guncelle();
+    }
+
+    function kurGuncelle() {
+      kurlar.forEach(kur => {
+        const yeniFiyat = prompt(`${kur.varlik} için yeni fiyat`, kur.fiyat);
+        if (yeniFiyat !== null && yeniFiyat !== '') {
+          kur.fiyat = Number(yeniFiyat);
+          kur.kaynak = 'Manuel';
+        }
+      });
+      guncelle();
+    }
+
+    function cariSil(index) {
+      cariler.splice(index, 1);
+      guncelle();
+    }
+
+    function cariDuzenle(index) {
+      const kayit = cariler[index];
+      const yeniAd = prompt('Cari adı', kayit.ad);
+      const yeniBakiye = prompt('Cari bakiye', kayit.bakiye);
+      const yeniSonIslem = prompt('Son işlem', kayit.sonIslem || '');
+
+      if (!yeniAd || yeniBakiye === null || yeniBakiye === '') return;
+      kayit.ad = yeniAd;
+      kayit.bakiye = Number(yeniBakiye);
+      kayit.sonIslem = yeniSonIslem || '';
+      guncelle();
+    }
+
+    function hesapSil(index) {
+      hesaplar.splice(index, 1);
+      guncelle();
+    }
+
+    function hesapDuzenle(index) {
+      const kayit = hesaplar[index];
+      const yeniAd = prompt('Hesap adı', kayit.hesap);
+      const yeniTip = prompt('Hesap tipi', kayit.tip);
+      const yeniBakiye = prompt('Bakiye', kayit.bakiye);
+
+      if (!yeniAd || !yeniTip || yeniBakiye === null || yeniBakiye === '') return;
+
+      kayit.hesap = yeniAd;
+      kayit.tip = yeniTip;
+      kayit.bakiye = Number(yeniBakiye);
+      guncelle();
+    }
+
+    function verileriKaydet() {
+      localStorage.setItem('hesapTakipHareketler', JSON.stringify(hareketler));
+      localStorage.setItem('hesapTakipBorclar', JSON.stringify(borclar));
+      localStorage.setItem('hesapTakipHesaplar', JSON.stringify(hesaplar));
+      localStorage.setItem('hesapTakipCariler', JSON.stringify(cariler));
+      localStorage.setItem('hesapTakipYatirimlar', JSON.stringify(yatirimlar));
+      localStorage.setItem('hesapTakipKurlar', JSON.stringify(kurlar));
+    }
+
+    function verileriYukle() {
+      const kayitliHareketler = JSON.parse(localStorage.getItem('hesapTakipHareketler') || 'null');
+      const kayitliBorclar = JSON.parse(localStorage.getItem('hesapTakipBorclar') || 'null');
+      const kayitliHesaplar = JSON.parse(localStorage.getItem('hesapTakipHesaplar') || 'null');
+      const kayitliCariler = JSON.parse(localStorage.getItem('hesapTakipCariler') || 'null');
+      const kayitliYatirimlar = JSON.parse(localStorage.getItem('hesapTakipYatirimlar') || 'null');
+      const kayitliKurlar = JSON.parse(localStorage.getItem('hesapTakipKurlar') || 'null');
+
+      if (kayitliHareketler) {
+        hareketler.length = 0;
+        hareketler.push(...kayitliHareketler);
+      }
+      if (kayitliBorclar) {
+        borclar.length = 0;
+        borclar.push(...kayitliBorclar);
+      }
+      if (kayitliHesaplar) {
+        hesaplar.length = 0;
+        hesaplar.push(...kayitliHesaplar);
+      }
+      if (kayitliCariler) {
+        cariler.length = 0;
+        cariler.push(...kayitliCariler);
+      }
+      if (kayitliYatirimlar) {
+        yatirimlar.length = 0;
+        yatirimlar.push(...kayitliYatirimlar);
+      }
+      if (kayitliKurlar) {
+        kurlar.length = 0;
+        kurlar.push(...kayitliKurlar);
+      }
     }
 
     function guncelle() {
@@ -329,6 +904,11 @@
       hareketleriGoster();
       borclariGoster();
       hesaplariGoster();
+      yatirimlariGoster();
+      kurlariGoster();
+      carileriGoster();
+      grafikleriGuncelle();
+      verileriKaydet();
     }
 
     guncelle();
