@@ -4,15 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kişisel Hesap Takip Sistemi</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --bg: #f4f6f8;
       --text: #1f2937;
       --muted: #6b7280;
       --card: #ffffff;
-      --line: #e5e7eb;
       --border: #d1d5db;
+      --line: #e5e7eb;
       --head: #111827;
       --head-text: #ffffff;
       --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
@@ -22,15 +21,15 @@
       --text: #e5e7eb;
       --muted: #94a3b8;
       --card: #111827;
-      --line: #1f2937;
       --border: #334155;
+      --line: #1f2937;
       --head: #1e293b;
       --head-text: #e5e7eb;
       --shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-    .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
     h1, h2, h3 { margin: 0 0 12px; }
     h1 { font-size: 32px; }
     h2 { font-size: 22px; }
@@ -42,6 +41,7 @@
     .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
     .card, .form-box, table, .modal-card { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); }
     .card, .form-box, .modal-card { padding: 18px; }
+    .card small { color: var(--muted); display:block; margin-bottom:8px; }
     .value { font-size: 28px; font-weight: 700; }
     .positive { color: #15803d; }
     .negative { color: #b91c1c; }
@@ -60,7 +60,7 @@
     button { background: #111827; color: white; font-weight: 700; cursor: pointer; border: none; }
     .btn-secondary { background: #e5e7eb; color: #111827; }
     body.dark .btn-secondary { background: #334155; color: #e5e7eb; }
-    .btn-danger { background: #b91c1c; }
+    .btn-danger { background: #b91c1c; color: white; }
     .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
     .toolbar > * { width: auto; }
     .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -75,10 +75,8 @@
     .modal.active { display: flex; }
     .modal-card { width: min(860px, 94vw); max-height: 88vh; overflow: auto; }
     .info-box { background: #eff6ff; color: #1e3a8a; border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
-    body.dark .info-box { background: #172554; color: #dbeafe; }
     .backup-list { display: grid; gap: 10px; }
     .backup-item { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    canvas { width: 100% !important; height: 280px !important; }
     @media (max-width: 960px) { .filters { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -127,7 +125,7 @@
 
   <div class="container">
     <h1>Kişisel Hesap Takip Sistemi</h1>
-    <p class="muted">Stabil sürüm. Gelir, gider, cari, yatırım ve rapor takibi.</p>
+    <p class="muted">Stabil ve sade sürüm.</p>
 
     <div class="toolbar">
       <button class="btn-secondary" onclick="toggleDarkMode()">Karanlık Mod</button>
@@ -309,21 +307,20 @@
 
     <div id="tab-rapor" class="tab-panel">
       <div class="section grid grid-2">
-        <div class="form-box"><h2>Kategori Bazlı Gider Dağılımı</h2><canvas id="categoryChart"></canvas></div>
-        <div class="form-box"><h2>Aylık Rapor</h2>
+        <div class="form-box">
+          <h2>Aylık Rapor</h2>
           <div class="form-grid">
             <input type="month" id="reportMonth" />
             <button onclick="updateMonthlyReport()">Aylık Raporu Getir</button>
           </div>
           <div class="info-box" id="monthlyReportBox">Bir ay seçip raporu görüntüleyebilirsin.</div>
         </div>
+        <div class="form-box">
+          <h2>Genel Not</h2>
+          <div class="info-box">Bu sürümde grafikler kaldırıldı. Önce stabil veri girişini çözdüm.</div>
+        </div>
       </div>
       <div class="section"><div class="grid grid-4" id="reportCards"></div></div>
-      <div class="section grid grid-2">
-        <div class="form-box"><h2>Varlık Dağılımı</h2><canvas id="assetChart"></canvas></div>
-        <div class="form-box"><h2>Nakit / Borç Özeti</h2><canvas id="financeChart"></canvas></div>
-      </div>
-      <div class="section"><div class="form-box"><h2>Yatırım Kâr / Zarar</h2><canvas id="profitChart"></canvas></div></div>
       <div class="section">
         <h2>Yaklaşan Vadeler</h2>
         <table>
@@ -335,644 +332,623 @@
   </div>
 
   <script>
-    (function () {
-      const STORAGE_KEY = 'hesapTakipStableV2';
-      const THEME_KEY = 'hesapTakipTema';
-      const BACKUPS_KEY = 'hesapTakipBackupsV1';
+    const STORAGE_KEY = 'hesapTakipStableV2';
+    const THEME_KEY = 'hesapTakipTema';
+    const BACKUPS_KEY = 'hesapTakipBackupsV1';
 
-      function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
-      function sayi(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
-      function paraYazdir(tutar) { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(sayi(tutar)); }
-      function bugunStr() { return new Date().toISOString().slice(0, 10); }
-      function ayBaslangicStr() { return bugunStr().slice(0, 7); }
+    function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+    function sayi(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+    function paraYazdir(tutar) { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(sayi(tutar)); }
+    function bugunStr() { return new Date().toISOString().slice(0, 10); }
+    function ayBaslangicStr() { return bugunStr().slice(0, 7); }
 
-      const state = {
-        transactions: [],
-        debts: [],
-        accounts: [
-          { id: uid(), name: 'Nakit', type: 'Nakit', balance: 0 },
-          { id: uid(), name: 'Banka', type: 'Banka', balance: 0 },
-          { id: uid(), name: 'Kredi Kartı', type: 'Kredi Kartı', balance: 0 }
-        ],
-        investments: [],
-        rates: [
-          { asset: 'Altın', price: 0, source: 'Manuel (Gram/TL)' },
-          { asset: 'Gümüş', price: 0, source: 'Manuel (Gram/TL)' },
-          { asset: 'Dolar', price: 0, source: 'TCMB/Manuel' },
-          { asset: 'Euro', price: 0, source: 'TCMB/Manuel' }
-        ],
-        customers: []
-      };
+    const state = {
+      transactions: [],
+      debts: [],
+      accounts: [
+        { id: uid(), name: 'Nakit', type: 'Nakit', balance: 0 },
+        { id: uid(), name: 'Banka', type: 'Banka', balance: 0 },
+        { id: uid(), name: 'Kredi Kartı', type: 'Kredi Kartı', balance: 0 }
+      ],
+      investments: [],
+      rates: [
+        { asset: 'Altın', price: 0, source: 'Manuel (Gram/TL)' },
+        { asset: 'Gümüş', price: 0, source: 'Manuel (Gram/TL)' },
+        { asset: 'Dolar', price: 0, source: 'TCMB/Manuel' },
+        { asset: 'Euro', price: 0, source: 'TCMB/Manuel' }
+      ],
+      customers: []
+    };
 
-      const charts = { asset: null, finance: null, profit: null, category: null };
+    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        state.transactions = Array.isArray(data.transactions) ? data.transactions : [];
+        state.debts = Array.isArray(data.debts) ? data.debts : [];
+        state.accounts = Array.isArray(data.accounts) && data.accounts.length ? data.accounts : state.accounts;
+        state.investments = Array.isArray(data.investments) ? data.investments : [];
+        state.rates = Array.isArray(data.rates) && data.rates.length ? data.rates : state.rates;
+        state.customers = Array.isArray(data.customers) ? data.customers : [];
+      } catch (e) { console.error(e); }
+    }
 
-      function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-      function loadState() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
+    function applyTheme() { if (localStorage.getItem(THEME_KEY) === 'dark') document.body.classList.add('dark'); }
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+      localStorage.setItem(THEME_KEY, document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    function setDefaultDates() {
+      const today = bugunStr();
+      ['txDate','debtDue','customerDate','transferDate','installmentDate'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = today;
+      });
+      const reportMonth = document.getElementById('reportMonth');
+      if (reportMonth && !reportMonth.value) reportMonth.value = ayBaslangicStr();
+    }
+
+    function updateAccountSelects() {
+      const options = state.accounts.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+      ['txAccount','transferFrom','transferTo','installmentAccount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = options;
+      });
+      const filter = document.getElementById('filterAccount');
+      if (filter) {
+        const current = filter.value;
+        filter.innerHTML = `<option value="">Tüm Hesaplar</option>${options}`;
+        filter.value = current;
+      }
+    }
+
+    function clearFormInputs() {
+      ['txCategory','txNote','txAmount','debtName','debtNote','debtAmount','newAccountName','newAccountBalance','customerName','customerAmount','customerNote','invAmount','invCost','installmentCategory','installmentNote','installmentTotal','installmentCount','transferAmount'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      setDefaultDates();
+    }
+
+    function openTab(name, btn) {
+      document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      const panel = document.getElementById(`tab-${name}`);
+      if (panel) panel.classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    function currentSearch() { return (document.getElementById('searchText')?.value || '').toLocaleLowerCase('tr-TR').trim(); }
+    function clearFilters() {
+      ['searchText','filterMonth'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      ['filterType','filterAccount'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      renderAll();
+    }
+
+    function filteredTransactions() {
+      const text = currentSearch();
+      const type = document.getElementById('filterType')?.value || '';
+      const account = document.getElementById('filterAccount')?.value || '';
+      const month = document.getElementById('filterMonth')?.value || '';
+      return state.transactions.filter(t => {
+        const blob = [t.category, t.note, t.account, t.type].join(' ').toLocaleLowerCase('tr-TR');
+        return (!text || blob.includes(text)) && (!type || t.type === type) && (!account || t.account === account) && (!month || (t.date || '').startsWith(month));
+      });
+    }
+
+    function filteredDebts() {
+      const text = currentSearch();
+      const month = document.getElementById('filterMonth')?.value || '';
+      return state.debts.filter(d => {
+        const blob = [d.name, d.note, d.type, d.status].join(' ').toLocaleLowerCase('tr-TR');
+        return (!text || blob.includes(text)) && (!month || (d.due || '').startsWith(month));
+      });
+    }
+
+    function totals() {
+      const income = state.transactions.filter(x => x.type === 'gelir').reduce((a,b)=>a+sayi(b.amount),0);
+      const expense = Math.abs(state.transactions.filter(x => x.type === 'gider').reduce((a,b)=>a+sayi(b.amount),0));
+      const net = income - expense;
+      const bank = state.accounts.filter(x => x.type === 'Banka').reduce((a,b)=>a+sayi(b.balance),0);
+      const cash = state.accounts.filter(x => x.type === 'Nakit').reduce((a,b)=>a+sayi(b.balance),0);
+      const card = Math.abs(state.accounts.filter(x => x.type === 'Kredi Kartı').reduce((a,b)=>a+sayi(b.balance),0));
+      const debt = state.debts.filter(x => x.type === 'borc' && x.status !== 'Ödendi').reduce((a,b)=>a+sayi(b.amount),0);
+      const receivable = state.debts.filter(x => x.type === 'alacak' && x.status !== 'Tahsil Edildi').reduce((a,b)=>a+sayi(b.amount),0);
+      const customerPos = state.customers.filter(x => x.balance > 0).reduce((a,b)=>a+sayi(b.balance),0);
+      const customerNeg = Math.abs(state.customers.filter(x => x.balance < 0).reduce((a,b)=>a+sayi(b.balance),0));
+      const investmentCost = state.investments.reduce((a,b)=>a + (sayi(b.amount) * sayi(b.cost)),0);
+      const investmentCurrent = state.investments.reduce((a,b)=> {
+        const r = state.rates.find(x => x.asset === b.asset);
+        const current = r ? sayi(r.price) : sayi(b.cost);
+        return a + (sayi(b.amount) * current);
+      },0);
+      return { income, expense, net, bank, cash, card, debt, receivable, customerPos, customerNeg, investmentCost, investmentCurrent, investmentPnL: investmentCurrent - investmentCost };
+    }
+
+    function renderSummary() {
+      const t = totals();
+      document.getElementById('summaryCards').innerHTML = `
+        <div class="card"><small>Toplam Gelir</small><div class="value positive">${paraYazdir(t.income)}</div></div>
+        <div class="card"><small>Toplam Gider</small><div class="value negative">${paraYazdir(t.expense)}</div></div>
+        <div class="card"><small>Net Durum</small><div class="value ${t.net >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.net)}</div></div>
+        <div class="card"><small>Toplam Yatırım</small><div class="value positive">${paraYazdir(t.investmentCurrent)}</div></div>`;
+      document.getElementById('reportCards').innerHTML = `
+        <div class="card"><small>Toplam Banka</small><div class="value ${t.bank >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.bank)}</div></div>
+        <div class="card"><small>Toplam Nakit</small><div class="value ${t.cash >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.cash)}</div></div>
+        <div class="card"><small>Toplam Kart Borcu</small><div class="value negative">${paraYazdir(t.card)}</div></div>
+        <div class="card"><small>Cari Net</small><div class="value ${(t.customerPos - t.customerNeg) >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.customerPos - t.customerNeg)}</div></div>`;
+      document.getElementById('investmentCards').innerHTML = `
+        <div class="card"><small>Toplam Maliyet</small><div class="value">${paraYazdir(t.investmentCost)}</div></div>
+        <div class="card"><small>Güncel Değer</small><div class="value positive">${paraYazdir(t.investmentCurrent)}</div></div>
+        <div class="card"><small>Kâr / Zarar</small><div class="value ${t.investmentPnL >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.investmentPnL)}</div></div>`;
+    }
+
+    function renderAccounts() {
+      document.getElementById('accountsTable').innerHTML = state.accounts.map((a, i) => `<tr><td>${a.name}</td><td>${a.type}</td><td class="${sayi(a.balance) >= 0 ? 'positive' : 'negative'}">${paraYazdir(a.balance)}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editAccount(${i})">Düzenle</button><button class="btn-danger" onclick="deleteAccount(${i})">Sil</button></div></td></tr>`).join('');
+    }
+
+    function renderTransactions() {
+      const list = filteredTransactions();
+      document.getElementById('transactionsTable').innerHTML = list.map(t => {
+        const i = state.transactions.findIndex(x => x.id === t.id);
+        const badgeClass = t.type === 'gelir' ? 'badge-gelir' : t.type === 'gider' ? 'badge-gider' : 'badge-transfer';
+        return `<tr><td>${t.date || ''}</td><td><span class="badge ${badgeClass}">${t.type}</span></td><td>${t.category || ''}</td><td>${t.note || '-'}</td><td class="${sayi(t.amount) >= 0 ? 'positive' : 'negative'}">${t.type === 'transfer' ? '-' : paraYazdir(t.amount)}</td><td>${t.account || ''}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editTransaction(${i})">Düzenle</button><button class="btn-danger" onclick="deleteTransaction(${i})">Sil</button></div></td></tr>`;
+      }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
+    }
+
+    function renderDebts() {
+      const list = filteredDebts();
+      document.getElementById('debtsTable').innerHTML = list.map(d => {
+        const i = state.debts.findIndex(x => x.id === d.id);
+        return `<tr><td>${d.name || ''}</td><td><span class="badge ${d.type === 'borc' ? 'badge-borc' : 'badge-alacak'}">${d.type}</span></td><td>${d.note || '-'}</td><td>${paraYazdir(d.amount)}</td><td>${d.due || ''}</td><td>${d.status || ''}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editDebt(${i})">Düzenle</button><button class="btn-danger" onclick="deleteDebt(${i})">Sil</button></div></td></tr>`;
+      }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
+    }
+
+    function renderCustomers() {
+      const text = currentSearch();
+      const list = state.customers.filter(c => !text || [c.name, c.lastAction].join(' ').toLocaleLowerCase('tr-TR').includes(text));
+      document.getElementById('customersTable').innerHTML = list.map(c => {
+        const i = state.customers.findIndex(x => x.id === c.id);
+        return `<tr><td>${c.name}</td><td class="${sayi(c.balance) >= 0 ? 'positive' : 'negative'}">${paraYazdir(c.balance)}</td><td>${c.lastAction || '-'}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="openCariDetail(${i})">Detay</button><button class="btn-secondary" onclick="editCustomer(${i})">Düzenle</button><button class="btn-danger" onclick="deleteCustomer(${i})">Sil</button></div></td></tr>`;
+      }).join('') || '<tr><td colspan="4">Kayıt yok.</td></tr>';
+    }
+
+    function renderInvestments() {
+      document.getElementById('investmentsTable').innerHTML = state.investments.map((inv, i) => {
+        const r = state.rates.find(x => x.asset === inv.asset);
+        const current = r ? sayi(r.price) : sayi(inv.cost);
+        const currentValue = sayi(inv.amount) * current;
+        const costValue = sayi(inv.amount) * sayi(inv.cost);
+        const pnl = currentValue - costValue;
+        return `<tr><td>${inv.asset}</td><td>${inv.amount}</td><td>${paraYazdir(inv.cost)}</td><td>${paraYazdir(current)}</td><td class="positive">${paraYazdir(currentValue)}</td><td class="${pnl >= 0 ? 'positive' : 'negative'}">${paraYazdir(pnl)}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editInvestment(${i})">Düzenle</button><button class="btn-danger" onclick="deleteInvestment(${i})">Sil</button></div></td></tr>`;
+      }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
+    }
+
+    function renderRates() {
+      document.getElementById('ratesTable').innerHTML = state.rates.map((r, i) => `<tr><td>${r.asset}</td><td>${paraYazdir(r.price)}</td><td>${r.source}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editRate(${i})">Düzenle</button></div></td></tr>`).join('');
+    }
+
+    function renderReminders() {
+      const today = new Date(bugunStr());
+      const rows = [];
+      state.debts.forEach(d => {
+        if (!d.due || d.status === 'Ödendi' || d.status === 'Tahsil Edildi') return;
+        const due = new Date(d.due);
+        const days = Math.ceil((due - today) / (1000*60*60*24));
+        rows.push({ type: d.type === 'borc' ? 'Borç' : 'Alacak', name: d.name, amount: d.amount, due: d.due, days: days, status: d.status });
+      });
+      rows.sort((a,b)=>a.days-b.days);
+      document.getElementById('remindersTable').innerHTML = rows.length ? rows.map(r => `<tr><td>${r.type}</td><td>${r.name}</td><td>${paraYazdir(r.amount)}</td><td>${r.due}</td><td class="${r.days < 0 ? 'negative' : r.days <= 3 ? 'negative' : 'positive'}">${r.days}</td><td>${r.status}</td></tr>`).join('') : '<tr><td colspan="6">Yaklaşan vade yok.</td></tr>';
+    }
+
+    function openCariDetail(i) {
+      const c = state.customers[i];
+      const body = document.getElementById('cariModalBody');
+      const rows = (c.history || []).map(h => `<tr><td>${h.date || ''}</td><td>${h.type || ''}</td><td>${h.note || '-'}</td><td>${paraYazdir(h.amount)}</td></tr>`).join('');
+      body.innerHTML = `<div class="section"><strong>Cari:</strong> ${c.name}<br><strong>Bakiye:</strong> ${paraYazdir(c.balance)}</div><div class="section"><table><thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th>Tutar</th></tr></thead><tbody>${rows || '<tr><td colspan="4">Cari hareket kaydı yok.</td></tr>'}</tbody></table></div>`;
+      document.getElementById('cariModal').classList.add('active');
+    }
+    function closeCariModal() { document.getElementById('cariModal').classList.remove('active'); }
+
+    function addTransaction() {
+      const date = document.getElementById('txDate').value;
+      const type = document.getElementById('txType').value;
+      const category = document.getElementById('txCategory').value.trim();
+      const note = document.getElementById('txNote').value.trim();
+      const amountRaw = sayi(document.getElementById('txAmount').value);
+      const account = document.getElementById('txAccount').value;
+      if (!date || !category || !amountRaw || !account) return alert('Lütfen tarih, kategori, tutar ve hesap alanlarını doldur.');
+      const amount = type === 'gider' ? -Math.abs(amountRaw) : Math.abs(amountRaw);
+      state.transactions.unshift({ id: uid(), date: date, type: type, category: category, note: note, amount: amount, account: account });
+      const acc = state.accounts.find(x => x.name === account);
+      if (acc) acc.balance += amount;
+      clearFormInputs();
+      renderAll();
+    }
+
+    function deleteTransaction(i) {
+      const t = state.transactions[i];
+      if (!t) return;
+      if (t.type !== 'transfer') {
+        const acc = state.accounts.find(x => x.name === t.account);
+        if (acc) acc.balance -= sayi(t.amount);
+      }
+      state.transactions.splice(i, 1);
+      renderAll();
+    }
+
+    function editTransaction(i) {
+      const t = state.transactions[i];
+      if (!t || t.type === 'transfer') return alert('Transfer kayıtlarını transfer formundan yönet.');
+      const date = prompt('Tarih', t.date || '');
+      const type = prompt('Tür (gelir/gider)', t.type || '');
+      const category = prompt('Kategori', t.category || '');
+      const note = prompt('Açıklama', t.note || '');
+      const amountRaw = prompt('Tutar', Math.abs(sayi(t.amount)));
+      const account = prompt('Hesap', t.account || '');
+      if (!date || !type || !category || !amountRaw || !account) return;
+      const oldAcc = state.accounts.find(x => x.name === t.account);
+      if (oldAcc) oldAcc.balance -= sayi(t.amount);
+      t.date = date; t.type = type; t.category = category; t.note = note || ''; t.account = account; t.amount = type === 'gider' ? -Math.abs(sayi(amountRaw)) : Math.abs(sayi(amountRaw));
+      const newAcc = state.accounts.find(x => x.name === t.account);
+      if (newAcc) newAcc.balance += sayi(t.amount);
+      renderAll();
+    }
+
+    function addInstallmentExpense() {
+      const date = document.getElementById('installmentDate').value || bugunStr();
+      const category = document.getElementById('installmentCategory').value.trim();
+      const note = document.getElementById('installmentNote').value.trim();
+      const total = sayi(document.getElementById('installmentTotal').value);
+      const count = Math.max(1, Math.floor(sayi(document.getElementById('installmentCount').value)));
+      const account = document.getElementById('installmentAccount').value;
+      if (!category || !total || !count || !account) return alert('Taksit bilgilerini doldur.');
+      const monthly = Number((total / count).toFixed(2));
+      const start = new Date(date);
+      for (let i = 0; i < count; i++) {
+        const d = new Date(start);
+        d.setMonth(d.getMonth() + i);
+        const txDate = d.toISOString().slice(0, 10);
+        const isLast = i === count - 1;
+        const amount = isLast ? -(Number((total - (monthly * (count - 1))).toFixed(2))) : -monthly;
+        state.transactions.unshift({ id: uid(), date: txDate, type: 'gider', category: category, note: `${note || 'Taksitli harcama'} (${i+1}/${count})`, amount: amount, account: account });
+      }
+      const acc = state.accounts.find(x => x.name === account);
+      if (acc) acc.balance -= total;
+      clearFormInputs();
+      renderAll();
+    }
+
+    function addTransfer() {
+      const from = document.getElementById('transferFrom').value;
+      const to = document.getElementById('transferTo').value;
+      const amount = sayi(document.getElementById('transferAmount').value);
+      const date = document.getElementById('transferDate').value;
+      if (!from || !to || !amount || from === to) return alert('Transfer bilgilerini doğru doldur.');
+      const a = state.accounts.find(x => x.name === from);
+      const b = state.accounts.find(x => x.name === to);
+      if (!a || !b) return;
+      a.balance -= amount;
+      b.balance += amount;
+      state.transactions.unshift({ id: uid(), date: date, type: 'transfer', category: 'Transfer', note: `${from} → ${to}`, amount: 0, account: to });
+      clearFormInputs();
+      renderAll();
+    }
+
+    function addDebt() {
+      const name = document.getElementById('debtName').value.trim();
+      const type = document.getElementById('debtType').value;
+      const note = document.getElementById('debtNote').value.trim();
+      const amount = sayi(document.getElementById('debtAmount').value);
+      const due = document.getElementById('debtDue').value;
+      const status = document.getElementById('debtStatus').value;
+      if (!name || !amount || !due) return alert('Lütfen kişi, tutar ve vade alanlarını doldur.');
+      state.debts.unshift({ id: uid(), name: name, type: type, note: note, amount: Math.abs(amount), due: due, status: status });
+      clearFormInputs();
+      renderAll();
+    }
+
+    function deleteDebt(i) { state.debts.splice(i, 1); renderAll(); }
+    function editDebt(i) {
+      const d = state.debts[i];
+      if (!d) return;
+      const name = prompt('Kişi / Kurum', d.name || '');
+      const type = prompt('Tip (borc/alacak)', d.type || '');
+      const note = prompt('Açıklama', d.note || '');
+      const amount = prompt('Tutar', d.amount || 0);
+      const due = prompt('Vade', d.due || '');
+      const status = prompt('Durum', d.status || '');
+      if (!name || !type || !amount || !due || !status) return;
+      d.name = name; d.type = type; d.note = note || ''; d.amount = Math.abs(sayi(amount)); d.due = due; d.status = status; renderAll();
+    }
+
+    function addAccount() {
+      const name = document.getElementById('newAccountName').value.trim();
+      const type = document.getElementById('newAccountType').value;
+      const balance = sayi(document.getElementById('newAccountBalance').value);
+      if (!name) return alert('Hesap adı gerekli.');
+      if (state.accounts.some(a => a.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'))) return alert('Bu hesap zaten var.');
+      state.accounts.unshift({ id: uid(), name: name, type: type, balance: balance });
+      clearFormInputs();
+      renderAll();
+    }
+
+    function deleteAccount(i) { state.accounts.splice(i, 1); renderAll(); }
+    function editAccount(i) {
+      const a = state.accounts[i];
+      if (!a) return;
+      const oldName = a.name;
+      const name = prompt('Hesap adı', a.name || '');
+      const type = prompt('Hesap tipi', a.type || '');
+      const balance = prompt('Bakiye', a.balance || 0);
+      if (!name || !type || balance === null || balance === '') return;
+      a.name = name; a.type = type; a.balance = sayi(balance);
+      state.transactions.forEach(t => { if (t.account === oldName) t.account = name; });
+      renderAll();
+    }
+
+    function addCustomerAction() {
+      const name = document.getElementById('customerName').value.trim();
+      const type = document.getElementById('customerType').value;
+      const amount = sayi(document.getElementById('customerAmount').value);
+      const note = document.getElementById('customerNote').value.trim();
+      const date = document.getElementById('customerDate').value;
+      if (!name || !amount || !date) return alert('Lütfen cari adı, tutar ve tarih alanlarını doldur.');
+      let delta = 0;
+      if (type === 'alacaklandir') delta = Math.abs(amount);
+      if (type === 'tahsilat') delta = -Math.abs(amount);
+      if (type === 'borclu') delta = -Math.abs(amount);
+      if (type === 'odeme') delta = Math.abs(amount);
+      let c = state.customers.find(x => x.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'));
+      if (!c) { c = { id: uid(), name: name, balance: 0, lastAction: '', history: [] }; state.customers.unshift(c); }
+      c.balance += delta;
+      c.lastAction = `${date} - ${note || type}`;
+      c.history.unshift({ id: uid(), date: date, type: type, note: note || '', amount: Math.abs(amount) });
+      clearFormInputs();
+      renderAll();
+    }
+
+    function deleteCustomer(i) { state.customers.splice(i, 1); renderAll(); }
+    function editCustomer(i) {
+      const c = state.customers[i];
+      if (!c) return;
+      const name = prompt('Cari adı', c.name || '');
+      const balance = prompt('Cari bakiye', c.balance || 0);
+      const lastAction = prompt('Son işlem', c.lastAction || '');
+      if (!name || balance === null || balance === '') return;
+      c.name = name; c.balance = sayi(balance); c.lastAction = lastAction || ''; renderAll();
+    }
+
+    function openCariDetail(i) {
+      const c = state.customers[i];
+      const body = document.getElementById('cariModalBody');
+      const rows = (c.history || []).map(h => `<tr><td>${h.date || ''}</td><td>${h.type || ''}</td><td>${h.note || '-'}</td><td>${paraYazdir(h.amount)}</td></tr>`).join('');
+      body.innerHTML = `<div class="section"><strong>Cari:</strong> ${c.name}<br><strong>Bakiye:</strong> ${paraYazdir(c.balance)}</div><div class="section"><table><thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th>Tutar</th></tr></thead><tbody>${rows || '<tr><td colspan="4">Cari hareket kaydı yok.</td></tr>'}</tbody></table></div>`;
+      document.getElementById('cariModal').classList.add('active');
+    }
+
+    function closeCariModal() { document.getElementById('cariModal').classList.remove('active'); }
+
+    function addInvestment() {
+      const asset = document.getElementById('invAsset').value;
+      const amount = sayi(document.getElementById('invAmount').value);
+      const cost = sayi(document.getElementById('invCost').value);
+      if (!asset || !amount || !cost) return alert('Lütfen yatırım bilgilerini doldur.');
+      state.investments.unshift({ id: uid(), asset: asset, amount: amount, cost: cost });
+      clearFormInputs();
+      renderAll();
+    }
+
+    function deleteInvestment(i) { state.investments.splice(i, 1); renderAll(); }
+    function editInvestment(i) {
+      const inv = state.investments[i];
+      if (!inv) return;
+      const asset = prompt('Varlık', inv.asset || '');
+      const amount = prompt('Miktar', inv.amount || 0);
+      const cost = prompt('Maliyet fiyatı', inv.cost || 0);
+      if (!asset || !amount || !cost) return;
+      inv.asset = asset; inv.amount = sayi(amount); inv.cost = sayi(cost); renderAll();
+    }
+
+    function editRate(i) {
+      const r = state.rates[i];
+      const price = prompt(`${r.asset} fiyatı`, r.price || 0);
+      if (price === null || price === '') return;
+      r.price = sayi(price);
+      r.source = (r.asset === 'Altın' || r.asset === 'Gümüş') ? 'Manuel (Gram/TL)' : 'Manuel';
+      renderAll();
+    }
+
+    function editAllRates() { state.rates.forEach((_, i) => editRate(i)); }
+
+    async function fetchLiveRates() {
+      const urls = [
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.tcmb.gov.tr/kurlar/today.xml'),
+        'https://cors.isomorphic-git.org/https://www.tcmb.gov.tr/kurlar/today.xml',
+        'https://www.tcmb.gov.tr/kurlar/today.xml'
+      ];
+      let text = '';
+      for (const url of urls) {
         try {
-          const data = JSON.parse(raw);
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) continue;
+          text = await res.text();
+          if (text.indexOf('CurrencyCode') !== -1) break;
+        } catch (e) {}
+      }
+      if (!text) return alert('Canlı kur alınamadı. Manuel giriş kullanabilirsin.');
+      try {
+        const xml = new DOMParser().parseFromString(text, 'application/xml');
+        const nodes = Array.from(xml.querySelectorAll('Currency'));
+        const usd = nodes.find(x => x.getAttribute('CurrencyCode') === 'USD');
+        const eur = nodes.find(x => x.getAttribute('CurrencyCode') === 'EUR');
+        const usdPrice = Number((usd && (usd.querySelector('ForexSelling')?.textContent || usd.querySelector('BanknoteSelling')?.textContent || '0')).replace(',', '.'));
+        const eurPrice = Number((eur && (eur.querySelector('ForexSelling')?.textContent || eur.querySelector('BanknoteSelling')?.textContent || '0')).replace(',', '.'));
+        const usdRate = state.rates.find(x => x.asset === 'Dolar');
+        const eurRate = state.rates.find(x => x.asset === 'Euro');
+        if (usdRate && usdPrice) { usdRate.price = usdPrice; usdRate.source = 'TCMB'; }
+        if (eurRate && eurPrice) { eurRate.price = eurPrice; eurRate.source = 'TCMB'; }
+        renderAll();
+        alert('USD ve EUR güncellendi.');
+      } catch (e) {
+        alert('Kur verisi çözümlenemedi. Manuel giriş kullanabilirsin.');
+      }
+    }
+
+    function updateMonthlyReport() {
+      const month = document.getElementById('reportMonth').value;
+      const box = document.getElementById('monthlyReportBox');
+      if (!month) { box.textContent = 'Lütfen bir ay seç.'; return; }
+      const tx = state.transactions.filter(x => (x.date || '').startsWith(month));
+      const db = state.debts.filter(x => (x.due || '').startsWith(month));
+      const income = tx.filter(x => x.type === 'gelir').reduce((a,b)=>a+sayi(b.amount),0);
+      const expense = Math.abs(tx.filter(x => x.type === 'gider').reduce((a,b)=>a+sayi(b.amount),0));
+      const transfers = tx.filter(x => x.type === 'transfer').length;
+      const debt = db.filter(x => x.type === 'borc').reduce((a,b)=>a+sayi(b.amount),0);
+      const receivable = db.filter(x => x.type === 'alacak').reduce((a,b)=>a+sayi(b.amount),0);
+      const parts = month.split('-');
+      box.innerHTML = `Seçilen dönem: <strong>${parts[1]}/${parts[0]}</strong><br>Gelir: <strong>${paraYazdir(income)}</strong><br>Gider: <strong>${paraYazdir(expense)}</strong><br>Net: <strong>${paraYazdir(income-expense)}</strong><br>Transfer adedi: <strong>${transfers}</strong><br>Ay içi borç: <strong>${paraYazdir(debt)}</strong><br>Ay içi alacak: <strong>${paraYazdir(receivable)}</strong>`;
+    }
+
+    function renderBackups() {
+      const el = document.getElementById('backupList');
+      const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]');
+      el.innerHTML = list.length ? list.map(item => `<div class="backup-item"><div><strong>${item.name}</strong><br><span class="muted">${new Date(item.createdAt).toLocaleString('tr-TR')}</span></div><div class="inline-actions"><button class="btn-secondary" onclick="restoreBackup('${item.id}')">Yükle</button><button class="btn-danger" onclick="deleteBackup('${item.id}')">Sil</button></div></div>`).join('') : '<div class="info-box">Kayıtlı yerel yedek yok.</div>';
+    }
+
+    function createBackup() {
+      const name = document.getElementById('backupName').value.trim() || `Yedek ${new Date().toLocaleString('tr-TR')}`;
+      const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]');
+      list.unshift({ id: uid(), name: name, createdAt: new Date().toISOString(), payload: JSON.parse(JSON.stringify(state)) });
+      localStorage.setItem(BACKUPS_KEY, JSON.stringify(list.slice(0, 20)));
+      document.getElementById('backupName').value = '';
+      renderBackups();
+      alert('Yerel yedek oluşturuldu.');
+    }
+
+    function restoreBackup(id) {
+      const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]');
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+      state.transactions = item.payload.transactions || [];
+      state.debts = item.payload.debts || [];
+      state.accounts = item.payload.accounts || state.accounts;
+      state.investments = item.payload.investments || [];
+      state.rates = item.payload.rates || state.rates;
+      state.customers = item.payload.customers || [];
+      renderAll();
+      alert('Yedek geri yüklendi.');
+    }
+
+    function deleteBackup(id) {
+      const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]').filter(x => x.id !== id);
+      localStorage.setItem(BACKUPS_KEY, JSON.stringify(list));
+      renderBackups();
+    }
+
+    function openBackupModal() { renderBackups(); document.getElementById('backupModal').classList.add('active'); }
+    function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
+
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'hesap-takip-yedek.json'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCsv() {
+      function esc(v) { const s = String(v ?? ''); return '"' + s.replace(/"/g, '""') + '"'; }
+      const sections = [];
+      function pushSection(name, rows) {
+        sections.push(name);
+        if (rows.length) {
+          const headers = Object.keys(rows[0]);
+          sections.push(headers.join(','));
+          rows.forEach(r => sections.push(headers.map(h => esc(r[h])).join(',')));
+        }
+        sections.push('');
+      }
+      pushSection('transactions', state.transactions);
+      pushSection('debts', state.debts);
+      pushSection('accounts', state.accounts);
+      pushSection('investments', state.investments);
+      pushSection('rates', state.rates);
+      pushSection('customers', state.customers.map(c => ({ id: c.id, name: c.name, balance: c.balance, lastAction: c.lastAction })));
+      const blob = new Blob([sections.join('
+')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'hesap-takip.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJsonFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = JSON.parse(e.target.result);
           state.transactions = Array.isArray(data.transactions) ? data.transactions : [];
           state.debts = Array.isArray(data.debts) ? data.debts : [];
           state.accounts = Array.isArray(data.accounts) && data.accounts.length ? data.accounts : state.accounts;
           state.investments = Array.isArray(data.investments) ? data.investments : [];
           state.rates = Array.isArray(data.rates) && data.rates.length ? data.rates : state.rates;
           state.customers = Array.isArray(data.customers) ? data.customers : [];
-        } catch (e) { console.error(e); }
-      }
-
-      function applyTheme() { if (localStorage.getItem(THEME_KEY) === 'dark') document.body.classList.add('dark'); }
-      window.toggleDarkMode = function () {
-        document.body.classList.toggle('dark');
-        localStorage.setItem(THEME_KEY, document.body.classList.contains('dark') ? 'dark' : 'light');
-      };
-
-      function setDefaultDates() {
-        const today = bugunStr();
-        ['txDate','debtDue','customerDate','transferDate','installmentDate'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el && !el.value) el.value = today;
-        });
-        const reportMonth = document.getElementById('reportMonth');
-        if (reportMonth && !reportMonth.value) reportMonth.value = ayBaslangicStr();
-      }
-
-      function updateAccountSelects() {
-        const options = state.accounts.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
-        ['txAccount','transferFrom','transferTo','installmentAccount'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.innerHTML = options;
-        });
-        const filter = document.getElementById('filterAccount');
-        if (filter) {
-          const current = filter.value;
-          filter.innerHTML = `<option value="">Tüm Hesaplar</option>${options}`;
-          filter.value = current;
-        }
-      }
-
-      function clearFormInputs() {
-        ['txCategory','txNote','txAmount','debtName','debtNote','debtAmount','newAccountName','newAccountBalance','customerName','customerAmount','customerNote','invAmount','invCost','installmentCategory','installmentNote','installmentTotal','installmentCount','transferAmount'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.value = '';
-        });
-        setDefaultDates();
-      }
-
-      window.openTab = function (name, btn) {
-        document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        const panel = document.getElementById(`tab-${name}`);
-        if (panel) panel.classList.add('active');
-        if (btn) btn.classList.add('active');
-      };
-
-      function currentSearch() { return (document.getElementById('searchText')?.value || '').toLocaleLowerCase('tr-TR').trim(); }
-      window.clearFilters = function () {
-        ['searchText','filterMonth'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        ['filterType','filterAccount'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        renderAll();
-      };
-
-      function filteredTransactions() {
-        const text = currentSearch();
-        const type = document.getElementById('filterType')?.value || '';
-        const account = document.getElementById('filterAccount')?.value || '';
-        const month = document.getElementById('filterMonth')?.value || '';
-        return state.transactions.filter(t => {
-          const blob = [t.category, t.note, t.account, t.type].join(' ').toLocaleLowerCase('tr-TR');
-          return (!text || blob.includes(text)) && (!type || t.type === type) && (!account || t.account === account) && (!month || (t.date || '').startsWith(month));
-        });
-      }
-      function filteredDebts() {
-        const text = currentSearch();
-        const month = document.getElementById('filterMonth')?.value || '';
-        return state.debts.filter(d => {
-          const blob = [d.name, d.note, d.type, d.status].join(' ').toLocaleLowerCase('tr-TR');
-          return (!text || blob.includes(text)) && (!month || (d.due || '').startsWith(month));
-        });
-      }
-
-      function totals() {
-        const income = state.transactions.filter(x => x.type === 'gelir').reduce((a,b)=>a+sayi(b.amount),0);
-        const expense = Math.abs(state.transactions.filter(x => x.type === 'gider').reduce((a,b)=>a+sayi(b.amount),0));
-        const net = income - expense;
-        const bank = state.accounts.filter(x => x.type === 'Banka').reduce((a,b)=>a+sayi(b.balance),0);
-        const cash = state.accounts.filter(x => x.type === 'Nakit').reduce((a,b)=>a+sayi(b.balance),0);
-        const card = Math.abs(state.accounts.filter(x => x.type === 'Kredi Kartı').reduce((a,b)=>a+sayi(b.balance),0));
-        const debt = state.debts.filter(x => x.type === 'borc' && x.status !== 'Ödendi').reduce((a,b)=>a+sayi(b.amount),0);
-        const receivable = state.debts.filter(x => x.type === 'alacak' && x.status !== 'Tahsil Edildi').reduce((a,b)=>a+sayi(b.amount),0);
-        const customerPos = state.customers.filter(x => x.balance > 0).reduce((a,b)=>a+sayi(b.balance),0);
-        const customerNeg = Math.abs(state.customers.filter(x => x.balance < 0).reduce((a,b)=>a+sayi(b.balance),0));
-        const investmentCost = state.investments.reduce((a,b)=>a + (sayi(b.amount) * sayi(b.cost)),0);
-        const investmentCurrent = state.investments.reduce((a,b)=> {
-          const r = state.rates.find(x => x.asset === b.asset);
-          const current = r ? sayi(r.price) : sayi(b.cost);
-          return a + (sayi(b.amount) * current);
-        },0);
-        return { income, expense, net, bank, cash, card, debt, receivable, customerPos, customerNeg, investmentCost, investmentCurrent, investmentPnL: investmentCurrent - investmentCost };
-      }
-
-      function renderSummary() {
-        const t = totals();
-        document.getElementById('summaryCards').innerHTML = `
-          <div class="card"><small>Toplam Gelir</small><div class="value positive">${paraYazdir(t.income)}</div></div>
-          <div class="card"><small>Toplam Gider</small><div class="value negative">${paraYazdir(t.expense)}</div></div>
-          <div class="card"><small>Net Durum</small><div class="value ${t.net >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.net)}</div></div>
-          <div class="card"><small>Toplam Yatırım</small><div class="value positive">${paraYazdir(t.investmentCurrent)}</div></div>`;
-        document.getElementById('reportCards').innerHTML = `
-          <div class="card"><small>Toplam Banka</small><div class="value ${t.bank >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.bank)}</div></div>
-          <div class="card"><small>Toplam Nakit</small><div class="value ${t.cash >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.cash)}</div></div>
-          <div class="card"><small>Toplam Kart Borcu</small><div class="value negative">${paraYazdir(t.card)}</div></div>
-          <div class="card"><small>Cari Net</small><div class="value ${(t.customerPos - t.customerNeg) >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.customerPos - t.customerNeg)}</div></div>`;
-        document.getElementById('investmentCards').innerHTML = `
-          <div class="card"><small>Toplam Maliyet</small><div class="value">${paraYazdir(t.investmentCost)}</div></div>
-          <div class="card"><small>Güncel Değer</small><div class="value positive">${paraYazdir(t.investmentCurrent)}</div></div>
-          <div class="card"><small>Kâr / Zarar</small><div class="value ${t.investmentPnL >= 0 ? 'positive' : 'negative'}">${paraYazdir(t.investmentPnL)}</div></div>`;
-      }
-
-      function renderAccounts() {
-        document.getElementById('accountsTable').innerHTML = state.accounts.map((a, i) => `
-          <tr><td>${a.name}</td><td>${a.type}</td><td class="${sayi(a.balance) >= 0 ? 'positive' : 'negative'}">${paraYazdir(a.balance)}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editAccount(${i})">Düzenle</button><button class="btn-danger" onclick="deleteAccount(${i})">Sil</button></div></td></tr>`).join('');
-      }
-      function renderTransactions() {
-        const list = filteredTransactions();
-        document.getElementById('transactionsTable').innerHTML = list.map(t => {
-          const i = state.transactions.findIndex(x => x.id === t.id);
-          const badgeClass = t.type === 'gelir' ? 'badge-gelir' : t.type === 'gider' ? 'badge-gider' : 'badge-transfer';
-          return `<tr><td>${t.date || ''}</td><td><span class="badge ${badgeClass}">${t.type}</span></td><td>${t.category || ''}</td><td>${t.note || '-'}</td><td class="${sayi(t.amount) >= 0 ? 'positive' : 'negative'}">${t.type === 'transfer' ? '-' : paraYazdir(t.amount)}</td><td>${t.account || ''}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editTransaction(${i})">Düzenle</button><button class="btn-danger" onclick="deleteTransaction(${i})">Sil</button></div></td></tr>`;
-        }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
-      }
-      function renderDebts() {
-        const list = filteredDebts();
-        document.getElementById('debtsTable').innerHTML = list.map(d => {
-          const i = state.debts.findIndex(x => x.id === d.id);
-          return `<tr><td>${d.name || ''}</td><td><span class="badge ${d.type === 'borc' ? 'badge-borc' : 'badge-alacak'}">${d.type}</span></td><td>${d.note || '-'}</td><td>${paraYazdir(d.amount)}</td><td>${d.due || ''}</td><td>${d.status || ''}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editDebt(${i})">Düzenle</button><button class="btn-danger" onclick="deleteDebt(${i})">Sil</button></div></td></tr>`;
-        }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
-      }
-      function renderCustomers() {
-        const text = currentSearch();
-        const list = state.customers.filter(c => !text || [c.name, c.lastAction].join(' ').toLocaleLowerCase('tr-TR').includes(text));
-        document.getElementById('customersTable').innerHTML = list.map(c => {
-          const i = state.customers.findIndex(x => x.id === c.id);
-          return `<tr><td>${c.name}</td><td class="${sayi(c.balance) >= 0 ? 'positive' : 'negative'}">${paraYazdir(c.balance)}</td><td>${c.lastAction || '-'}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="openCariDetail(${i})">Detay</button><button class="btn-secondary" onclick="editCustomer(${i})">Düzenle</button><button class="btn-danger" onclick="deleteCustomer(${i})">Sil</button></div></td></tr>`;
-        }).join('') || '<tr><td colspan="4">Kayıt yok.</td></tr>';
-      }
-      function renderInvestments() {
-        document.getElementById('investmentsTable').innerHTML = state.investments.map((inv, i) => {
-          const r = state.rates.find(x => x.asset === inv.asset);
-          const current = r ? sayi(r.price) : sayi(inv.cost);
-          const currentValue = sayi(inv.amount) * current;
-          const costValue = sayi(inv.amount) * sayi(inv.cost);
-          const pnl = currentValue - costValue;
-          return `<tr><td>${inv.asset}</td><td>${inv.amount}</td><td>${paraYazdir(inv.cost)}</td><td>${paraYazdir(current)}</td><td class="positive">${paraYazdir(currentValue)}</td><td class="${pnl >= 0 ? 'positive' : 'negative'}">${paraYazdir(pnl)}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editInvestment(${i})">Düzenle</button><button class="btn-danger" onclick="deleteInvestment(${i})">Sil</button></div></td></tr>`;
-        }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
-      }
-      function renderRates() {
-        document.getElementById('ratesTable').innerHTML = state.rates.map((r, i) => `<tr><td>${r.asset}</td><td>${paraYazdir(r.price)}</td><td>${r.source}</td><td><div class="inline-actions"><button class="btn-secondary" onclick="editRate(${i})">Düzenle</button></div></td></tr>`).join('');
-      }
-
-      window.openCariDetail = function (i) {
-        const c = state.customers[i];
-        const body = document.getElementById('cariModalBody');
-        const rows = (c.history || []).map(h => `<tr><td>${h.date || ''}</td><td>${h.type || ''}</td><td>${h.note || '-'}</td><td>${paraYazdir(h.amount)}</td></tr>`).join('');
-        body.innerHTML = `<div class="section"><strong>Cari:</strong> ${c.name}<br><strong>Bakiye:</strong> ${paraYazdir(c.balance)}</div><div class="section"><table><thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th>Tutar</th></tr></thead><tbody>${rows || '<tr><td colspan="4">Cari hareket kaydı yok.</td></tr>'}</tbody></table></div>`;
-        document.getElementById('cariModal').classList.add('active');
-      };
-      window.closeCariModal = function () { document.getElementById('cariModal').classList.remove('active'); };
-
-      window.addTransaction = function () {
-        const date = document.getElementById('txDate').value;
-        const type = document.getElementById('txType').value;
-        const category = document.getElementById('txCategory').value.trim();
-        const note = document.getElementById('txNote').value.trim();
-        const amountRaw = sayi(document.getElementById('txAmount').value);
-        const account = document.getElementById('txAccount').value;
-        if (!date || !category || !amountRaw || !account) return alert('Lütfen tarih, kategori, tutar ve hesap alanlarını doldur.');
-        const amount = type === 'gider' ? -Math.abs(amountRaw) : Math.abs(amountRaw);
-        state.transactions.unshift({ id: uid(), date, type, category, note, amount, account });
-        const acc = state.accounts.find(x => x.name === account);
-        if (acc) acc.balance += amount;
-        clearFormInputs();
-        renderAll();
-      };
-      window.deleteTransaction = function (i) {
-        const t = state.transactions[i];
-        if (!t) return;
-        if (t.type !== 'transfer') {
-          const acc = state.accounts.find(x => x.name === t.account);
-          if (acc) acc.balance -= sayi(t.amount);
-        }
-        state.transactions.splice(i, 1);
-        renderAll();
-      };
-      window.editTransaction = function (i) {
-        const t = state.transactions[i];
-        if (!t || t.type === 'transfer') return alert('Transfer kayıtlarını transfer formundan yönet.');
-        const date = prompt('Tarih', t.date || '');
-        const type = prompt('Tür (gelir/gider)', t.type || '');
-        const category = prompt('Kategori', t.category || '');
-        const note = prompt('Açıklama', t.note || '');
-        const amountRaw = prompt('Tutar', Math.abs(sayi(t.amount)));
-        const account = prompt('Hesap', t.account || '');
-        if (!date || !type || !category || !amountRaw || !account) return;
-        const oldAcc = state.accounts.find(x => x.name === t.account);
-        if (oldAcc) oldAcc.balance -= sayi(t.amount);
-        t.date = date; t.type = type; t.category = category; t.note = note || ''; t.account = account; t.amount = type === 'gider' ? -Math.abs(sayi(amountRaw)) : Math.abs(sayi(amountRaw));
-        const newAcc = state.accounts.find(x => x.name === t.account);
-        if (newAcc) newAcc.balance += sayi(t.amount);
-        renderAll();
-      };
-
-      window.addInstallmentExpense = function () {
-        const date = document.getElementById('installmentDate').value || bugunStr();
-        const category = document.getElementById('installmentCategory').value.trim();
-        const note = document.getElementById('installmentNote').value.trim();
-        const total = sayi(document.getElementById('installmentTotal').value);
-        const count = Math.max(1, Math.floor(sayi(document.getElementById('installmentCount').value)));
-        const account = document.getElementById('installmentAccount').value;
-        if (!category || !total || !count || !account) return alert('Taksit bilgilerini doldur.');
-        const monthly = Number((total / count).toFixed(2));
-        const start = new Date(date);
-        for (let i = 0; i < count; i++) {
-          const d = new Date(start);
-          d.setMonth(d.getMonth() + i);
-          const txDate = d.toISOString().slice(0, 10);
-          const isLast = i === count - 1;
-          const amount = isLast ? -(Number((total - (monthly * (count - 1))).toFixed(2))) : -monthly;
-          state.transactions.unshift({ id: uid(), date: txDate, type: 'gider', category, note: `${note || 'Taksitli harcama'} (${i+1}/${count})`, amount, account });
-        }
-        const acc = state.accounts.find(x => x.name === account);
-        if (acc) acc.balance -= total;
-        clearFormInputs();
-        renderAll();
-      };
-
-      window.addTransfer = function () {
-        const from = document.getElementById('transferFrom').value;
-        const to = document.getElementById('transferTo').value;
-        const amount = sayi(document.getElementById('transferAmount').value);
-        const date = document.getElementById('transferDate').value;
-        if (!from || !to || !amount || from === to) return alert('Transfer bilgilerini doğru doldur.');
-        const a = state.accounts.find(x => x.name === from);
-        const b = state.accounts.find(x => x.name === to);
-        if (!a || !b) return;
-        a.balance -= amount;
-        b.balance += amount;
-        state.transactions.unshift({ id: uid(), date, type: 'transfer', category: 'Transfer', note: `${from} → ${to}`, amount: 0, account: to });
-        clearFormInputs();
-        renderAll();
-      };
-
-      window.addDebt = function () {
-        const name = document.getElementById('debtName').value.trim();
-        const type = document.getElementById('debtType').value;
-        const note = document.getElementById('debtNote').value.trim();
-        const amount = sayi(document.getElementById('debtAmount').value);
-        const due = document.getElementById('debtDue').value;
-        const status = document.getElementById('debtStatus').value;
-        if (!name || !amount || !due) return alert('Lütfen kişi, tutar ve vade alanlarını doldur.');
-        state.debts.unshift({ id: uid(), name, type, note, amount: Math.abs(amount), due, status });
-        clearFormInputs();
-        renderAll();
-      };
-      window.deleteDebt = function (i) { state.debts.splice(i, 1); renderAll(); };
-      window.editDebt = function (i) {
-        const d = state.debts[i];
-        if (!d) return;
-        const name = prompt('Kişi / Kurum', d.name || '');
-        const type = prompt('Tip (borc/alacak)', d.type || '');
-        const note = prompt('Açıklama', d.note || '');
-        const amount = prompt('Tutar', d.amount || 0);
-        const due = prompt('Vade', d.due || '');
-        const status = prompt('Durum', d.status || '');
-        if (!name || !type || !amount || !due || !status) return;
-        d.name = name; d.type = type; d.note = note || ''; d.amount = Math.abs(sayi(amount)); d.due = due; d.status = status; renderAll();
-      };
-
-      window.addAccount = function () {
-        const name = document.getElementById('newAccountName').value.trim();
-        const type = document.getElementById('newAccountType').value;
-        const balance = sayi(document.getElementById('newAccountBalance').value);
-        if (!name) return alert('Hesap adı gerekli.');
-        if (state.accounts.some(a => a.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'))) return alert('Bu hesap zaten var.');
-        state.accounts.unshift({ id: uid(), name, type, balance });
-        clearFormInputs();
-        renderAll();
-      };
-      window.deleteAccount = function (i) { state.accounts.splice(i, 1); renderAll(); };
-      window.editAccount = function (i) {
-        const a = state.accounts[i];
-        if (!a) return;
-        const oldName = a.name;
-        const name = prompt('Hesap adı', a.name || '');
-        const type = prompt('Hesap tipi', a.type || '');
-        const balance = prompt('Bakiye', a.balance || 0);
-        if (!name || !type || balance === null || balance === '') return;
-        a.name = name; a.type = type; a.balance = sayi(balance);
-        state.transactions.forEach(t => { if (t.account === oldName) t.account = name; });
-        renderAll();
-      };
-
-      window.addCustomerAction = function () {
-        const name = document.getElementById('customerName').value.trim();
-        const type = document.getElementById('customerType').value;
-        const amount = sayi(document.getElementById('customerAmount').value);
-        const note = document.getElementById('customerNote').value.trim();
-        const date = document.getElementById('customerDate').value;
-        if (!name || !amount || !date) return alert('Lütfen cari adı, tutar ve tarih alanlarını doldur.');
-        let delta = 0;
-        if (type === 'alacaklandir') delta = Math.abs(amount);
-        if (type === 'tahsilat') delta = -Math.abs(amount);
-        if (type === 'borclu') delta = -Math.abs(amount);
-        if (type === 'odeme') delta = Math.abs(amount);
-        let c = state.customers.find(x => x.name.toLocaleLowerCase('tr-TR') === name.toLocaleLowerCase('tr-TR'));
-        if (!c) { c = { id: uid(), name, balance: 0, lastAction: '', history: [] }; state.customers.unshift(c); }
-        c.balance += delta;
-        c.lastAction = `${date} - ${note || type}`;
-        c.history.unshift({ id: uid(), date, type, note: note || '', amount: Math.abs(amount) });
-        clearFormInputs();
-        renderAll();
-      };
-      window.deleteCustomer = function (i) { state.customers.splice(i, 1); renderAll(); };
-      window.editCustomer = function (i) {
-        const c = state.customers[i];
-        if (!c) return;
-        const name = prompt('Cari adı', c.name || '');
-        const balance = prompt('Cari bakiye', c.balance || 0);
-        const lastAction = prompt('Son işlem', c.lastAction || '');
-        if (!name || balance === null || balance === '') return;
-        c.name = name; c.balance = sayi(balance); c.lastAction = lastAction || ''; renderAll();
-      };
-
-      window.addInvestment = function () {
-        const asset = document.getElementById('invAsset').value;
-        const amount = sayi(document.getElementById('invAmount').value);
-        const cost = sayi(document.getElementById('invCost').value);
-        if (!asset || !amount || !cost) return alert('Lütfen yatırım bilgilerini doldur.');
-        state.investments.unshift({ id: uid(), asset, amount, cost });
-        clearFormInputs();
-        renderAll();
-      };
-      window.deleteInvestment = function (i) { state.investments.splice(i, 1); renderAll(); };
-      window.editInvestment = function (i) {
-        const inv = state.investments[i];
-        if (!inv) return;
-        const asset = prompt('Varlık', inv.asset || '');
-        const amount = prompt('Miktar', inv.amount || 0);
-        const cost = prompt('Maliyet fiyatı', inv.cost || 0);
-        if (!asset || !amount || !cost) return;
-        inv.asset = asset; inv.amount = sayi(amount); inv.cost = sayi(cost); renderAll();
-      };
-      window.editRate = function (i) {
-        const r = state.rates[i];
-        const price = prompt(`${r.asset} fiyatı`, r.price || 0);
-        if (price === null || price === '') return;
-        r.price = sayi(price);
-        r.source = (r.asset === 'Altın' || r.asset === 'Gümüş') ? 'Manuel (Gram/TL)' : 'Manuel';
-        renderAll();
-      };
-      window.editAllRates = function () { state.rates.forEach((_, i) => window.editRate(i)); };
-      window.fetchLiveRates = async function () {
-        const urls = [
-          'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.tcmb.gov.tr/kurlar/today.xml'),
-          'https://cors.isomorphic-git.org/https://www.tcmb.gov.tr/kurlar/today.xml',
-          'https://www.tcmb.gov.tr/kurlar/today.xml'
-        ];
-        let text = '';
-        for (const url of urls) {
-          try {
-            const res = await fetch(url, { cache: 'no-store' });
-            if (!res.ok) continue;
-            text = await res.text();
-            if (text.includes('CurrencyCode')) break;
-          } catch (e) {}
-        }
-        if (!text) return alert('Canlı kur alınamadı. Manuel giriş kullanabilirsin.');
-        try {
-          const xml = new DOMParser().parseFromString(text, 'application/xml');
-          const nodes = Array.from(xml.querySelectorAll('Currency'));
-          const usd = nodes.find(x => x.getAttribute('CurrencyCode') === 'USD');
-          const eur = nodes.find(x => x.getAttribute('CurrencyCode') === 'EUR');
-          const usdPrice = Number((usd?.querySelector('ForexSelling')?.textContent || usd?.querySelector('BanknoteSelling')?.textContent || '0').replace(',', '.'));
-          const eurPrice = Number((eur?.querySelector('ForexSelling')?.textContent || eur?.querySelector('BanknoteSelling')?.textContent || '0').replace(',', '.'));
-          const usdRate = state.rates.find(x => x.asset === 'Dolar');
-          const eurRate = state.rates.find(x => x.asset === 'Euro');
-          if (usdRate && usdPrice) { usdRate.price = usdPrice; usdRate.source = 'TCMB'; }
-          if (eurRate && eurPrice) { eurRate.price = eurPrice; eurRate.source = 'TCMB'; }
           renderAll();
-          alert('USD ve EUR güncellendi.');
-        } catch (e) {
-          alert('Kur verisi çözümlenemedi. Manuel giriş kullanabilirsin.');
+          alert('Veriler içe aktarıldı.');
+        } catch (e2) {
+          alert('JSON okunamadı.');
         }
       };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
 
-      window.updateMonthlyReport = function () {
-        const month = document.getElementById('reportMonth').value;
-        const box = document.getElementById('monthlyReportBox');
-        if (!month) { box.textContent = 'Lütfen bir ay seç.'; return; }
-        const tx = state.transactions.filter(x => (x.date || '').startsWith(month));
-        const db = state.debts.filter(x => (x.due || '').startsWith(month));
-        const income = tx.filter(x => x.type === 'gelir').reduce((a,b)=>a+sayi(b.amount),0);
-        const expense = Math.abs(tx.filter(x => x.type === 'gider').reduce((a,b)=>a+sayi(b.amount),0));
-        const transfers = tx.filter(x => x.type === 'transfer').length;
-        const debt = db.filter(x => x.type === 'borc').reduce((a,b)=>a+sayi(b.amount),0);
-        const receivable = db.filter(x => x.type === 'alacak').reduce((a,b)=>a+sayi(b.amount),0);
-        const parts = month.split('-');
-        box.innerHTML = `Seçilen dönem: <strong>${parts[1]}/${parts[0]}</strong><br>Gelir: <strong>${paraYazdir(income)}</strong><br>Gider: <strong>${paraYazdir(expense)}</strong><br>Net: <strong>${paraYazdir(income-expense)}</strong><br>Transfer adedi: <strong>${transfers}</strong><br>Ay içi borç: <strong>${paraYazdir(debt)}</strong><br>Ay içi alacak: <strong>${paraYazdir(receivable)}</strong>`;
-      };
-
-      function renderReminders() {
-        const today = new Date(bugunStr());
-        const rows = [];
-        state.debts.forEach(d => {
-          if (!d.due || d.status === 'Ödendi' || d.status === 'Tahsil Edildi') return;
-          const due = new Date(d.due);
-          const days = Math.ceil((due - today) / (1000*60*60*24));
-          rows.push({ type: d.type === 'borc' ? 'Borç' : 'Alacak', name: d.name, amount: d.amount, due: d.due, days, status: d.status });
-        });
-        rows.sort((a,b)=>a.days-b.days);
-        document.getElementById('remindersTable').innerHTML = rows.length ? rows.map(r => `<tr><td>${r.type}</td><td>${r.name}</td><td>${paraYazdir(r.amount)}</td><td>${r.due}</td><td class="${r.days < 0 ? 'negative' : r.days <= 3 ? 'negative' : 'positive'}">${r.days}</td><td>${r.status}</td></tr>`).join('') : '<tr><td colspan="6">Yaklaşan vade yok.</td></tr>';
-      }
-
-      function renderCharts() {
-        if (typeof Chart === 'undefined') return;
-        const assetLabels = state.investments.map(x => x.asset);
-        const assetValues = state.investments.map(x => {
-          const r = state.rates.find(k => k.asset === x.asset);
-          const current = r ? sayi(r.price) : sayi(x.cost);
-          return Number((sayi(x.amount) * current).toFixed(2));
-        });
-        const t = totals();
-        const financeLabels = ['Banka', 'Nakit', 'Kart Borcu', 'Cari Alacak', 'Cari Borç'];
-        const financeValues = [t.bank, t.cash, t.card, t.customerPos, t.customerNeg];
-        const profitLabels = state.investments.map(x => x.asset);
-        const profitValues = state.investments.map(x => {
-          const r = state.rates.find(k => k.asset === x.asset);
-          const current = r ? sayi(r.price) : sayi(x.cost);
-          return Number(((sayi(x.amount) * current) - (sayi(x.amount) * sayi(x.cost))).toFixed(2));
-        });
-        const expenseMap = {};
-        state.transactions.filter(x => x.type === 'gider').forEach(x => {
-          const key = x.category || 'Diğer';
-          expenseMap[key] = (expenseMap[key] || 0) + Math.abs(sayi(x.amount));
-        });
-        const categoryLabels = Object.keys(expenseMap);
-        const categoryValues = Object.values(expenseMap);
-
-        if (charts.asset) charts.asset.destroy();
-        if (charts.finance) charts.finance.destroy();
-        if (charts.profit) charts.profit.destroy();
-        if (charts.category) charts.category.destroy();
-
-        charts.asset = new Chart(document.getElementById('assetChart'), { type: 'doughnut', data: { labels: assetLabels.length ? assetLabels : ['Veri yok'], datasets: [{ data: assetValues.length ? assetValues : [1] }] }, options: { responsive: true, maintainAspectRatio: false } });
-        charts.finance = new Chart(document.getElementById('financeChart'), { type: 'bar', data: { labels: financeLabels, datasets: [{ label: 'Tutar', data: financeValues }] }, options: { responsive: true, maintainAspectRatio: false } });
-        charts.profit = new Chart(document.getElementById('profitChart'), { type: 'bar', data: { labels: profitLabels.length ? profitLabels : ['Veri yok'], datasets: [{ label: 'Kâr / Zarar', data: profitValues.length ? profitValues : [0] }] }, options: { responsive: true, maintainAspectRatio: false } });
-        charts.category = new Chart(document.getElementById('categoryChart'), { type: 'pie', data: { labels: categoryLabels.length ? categoryLabels : ['Veri yok'], datasets: [{ data: categoryValues.length ? categoryValues : [1] }] }, options: { responsive: true, maintainAspectRatio: false } });
-      }
-
-      window.exportJson = function () {
-        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'hesap-takip-yedek.json';
-        a.click();
-        URL.revokeObjectURL(url);
-      };
-      window.exportCsv = function () {
-        function esc(v) { const s = String(v ?? ''); return '"' + s.replaceAll('"', '""') + '"'; }
-        const sections = [];
-        const pushSection = (name, rows) => {
-          sections.push(name);
-          if (rows.length) {
-            const headers = Object.keys(rows[0]);
-            sections.push(headers.join(','));
-            rows.forEach(r => sections.push(headers.map(h => esc(r[h])).join(',')));
-          }
-          sections.push('');
-        };
-        pushSection('transactions', state.transactions);
-        pushSection('debts', state.debts);
-        pushSection('accounts', state.accounts);
-        pushSection('investments', state.investments);
-        pushSection('rates', state.rates);
-        pushSection('customers', state.customers.map(c => ({ id: c.id, name: c.name, balance: c.balance, lastAction: c.lastAction })));
-        const blob = new Blob([sections.join('
-')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'hesap-takip.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-      };
-      window.importJsonFile = function (event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-          try {
-            const data = JSON.parse(e.target.result);
-            state.transactions = Array.isArray(data.transactions) ? data.transactions : [];
-            state.debts = Array.isArray(data.debts) ? data.debts : [];
-            state.accounts = Array.isArray(data.accounts) && data.accounts.length ? data.accounts : state.accounts;
-            state.investments = Array.isArray(data.investments) ? data.investments : [];
-            state.rates = Array.isArray(data.rates) && data.rates.length ? data.rates : state.rates;
-            state.customers = Array.isArray(data.customers) ? data.customers : [];
-            renderAll();
-            alert('Veriler içe aktarıldı.');
-          } catch (e) {
-            alert('JSON okunamadı.');
-          }
-        };
-        reader.readAsText(file);
-        event.target.value = '';
-      };
-
-      window.createBackup = function () {
-        const name = document.getElementById('backupName').value.trim() || `Yedek ${new Date().toLocaleString('tr-TR')}`;
-        const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]');
-        list.unshift({ id: uid(), name, createdAt: new Date().toISOString(), payload: JSON.parse(JSON.stringify(state)) });
-        localStorage.setItem(BACKUPS_KEY, JSON.stringify(list.slice(0, 20)));
-        document.getElementById('backupName').value = '';
-        renderBackups();
-        alert('Yerel yedek oluşturuldu.');
-      };
-      window.restoreBackup = function (id) {
-        const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]');
-        const item = list.find(x => x.id === id);
-        if (!item) return;
-        state.transactions = item.payload.transactions || [];
-        state.debts = item.payload.debts || [];
-        state.accounts = item.payload.accounts || state.accounts;
-        state.investments = item.payload.investments || [];
-        state.rates = item.payload.rates || state.rates;
-        state.customers = item.payload.customers || [];
-        renderAll();
-        alert('Yedek geri yüklendi.');
-      };
-      window.deleteBackup = function (id) {
-        const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]').filter(x => x.id !== id);
-        localStorage.setItem(BACKUPS_KEY, JSON.stringify(list));
-        renderBackups();
-      };
-      function renderBackups() {
-        const el = document.getElementById('backupList');
-        if (!el) return;
-        const list = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]');
-        el.innerHTML = list.length ? list.map(item => `<div class="backup-item"><div><strong>${item.name}</strong><br><span class="muted">${new Date(item.createdAt).toLocaleString('tr-TR')}</span></div><div class="inline-actions"><button class="btn-secondary" onclick="restoreBackup('${item.id}')">Yükle</button><button class="btn-danger" onclick="deleteBackup('${item.id}')">Sil</button></div></div>`).join('') : '<div class="info-box">Kayıtlı yerel yedek yok.</div>';
-      }
-      window.openBackupModal = function () { renderBackups(); document.getElementById('backupModal').classList.add('active'); };
-      window.closeBackupModal = function () { document.getElementById('backupModal').classList.remove('active'); };
-
-      window.resetAllData = function () {
-        if (!confirm('Tüm kayıtlar silinsin mi?')) return;
-        localStorage.removeItem(STORAGE_KEY);
-        state.transactions = [];
-        state.debts = [];
-        state.accounts = [
-          { id: uid(), name: 'Nakit', type: 'Nakit', balance: 0 },
-          { id: uid(), name: 'Banka', type: 'Banka', balance: 0 },
-          { id: uid(), name: 'Kredi Kartı', type: 'Kredi Kartı', balance: 0 }
-        ];
-        state.investments = [];
-        state.rates = [
-          { asset: 'Altın', price: 0, source: 'Manuel (Gram/TL)' },
-          { asset: 'Gümüş', price: 0, source: 'Manuel (Gram/TL)' },
-          { asset: 'Dolar', price: 0, source: 'TCMB/Manuel' },
-          { asset: 'Euro', price: 0, source: 'TCMB/Manuel' }
-        ];
-        state.customers = [];
-        renderAll();
-      };
-
-      function renderAll() {
-        try {
-          updateAccountSelects();
-          renderSummary();
-          renderAccounts();
-          renderTransactions();
-          renderDebts();
-          renderCustomers();
-          renderInvestments();
-          renderRates();
-          renderReminders();
-          window.updateMonthlyReport();
-          renderCharts();
-          renderBackups();
-          saveState();
-        } catch (e) {
-          console.error('renderAll error:', e);
-          alert('Bir hata oluştu. Tarayıcı konsolunda detay var.');
-        }
-      }
-
-      applyTheme();
-      loadState();
-      setDefaultDates();
+    function resetAllData() {
+      if (!confirm('Tüm kayıtlar silinsin mi?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state.transactions = [];
+      state.debts = [];
+      state.accounts = [
+        { id: uid(), name: 'Nakit', type: 'Nakit', balance: 0 },
+        { id: uid(), name: 'Banka', type: 'Banka', balance: 0 },
+        { id: uid(), name: 'Kredi Kartı', type: 'Kredi Kartı', balance: 0 }
+      ];
+      state.investments = [];
+      state.rates = [
+        { asset: 'Altın', price: 0, source: 'Manuel (Gram/TL)' },
+        { asset: 'Gümüş', price: 0, source: 'Manuel (Gram/TL)' },
+        { asset: 'Dolar', price: 0, source: 'TCMB/Manuel' },
+        { asset: 'Euro', price: 0, source: 'TCMB/Manuel' }
+      ];
+      state.customers = [];
       renderAll();
-    })();
+    }
+
+    function renderAll() {
+      updateAccountSelects();
+      renderSummary();
+      renderAccounts();
+      renderTransactions();
+      renderDebts();
+      renderCustomers();
+      renderInvestments();
+      renderRates();
+      renderReminders();
+      updateMonthlyReport();
+      renderBackups();
+      saveState();
+    }
+
+    applyTheme();
+    loadState();
+    setDefaultDates();
+    renderAll();
   </script>
 </body>
 </html>
