@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kişisel Hesap Takip Sistemi</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1, h2, h3 { margin: 0 0 12px; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 22px; margin-top: 28px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    .card small {
+      color: #6b7280;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .positive { color: #15803d; }
+    .negative { color: #b91c1c; }
+    .section {
+      margin-top: 28px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    th, td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #111827;
+      color: white;
+    }
+    tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge-gelir { background: #dcfce7; color: #166534; }
+    .badge-gider { background: #fee2e2; color: #991b1b; }
+    .badge-borc { background: #fef3c7; color: #92400e; }
+    .badge-alacak { background: #dbeafe; color: #1d4ed8; }
+    .form-box {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    button {
+      background: #111827;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover { opacity: 0.95; }
+    .muted { color: #6b7280; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Kişisel Hesap Takip Sistemi</h1>
+    <p class="muted">Gelir, gider, borç/alacak ve hesap bakiyelerini tek sayfada takip et.</p>
+
+    <div class="grid" id="ozetKartlari"></div>
+
+    <div class="section two-col">
+      <div class="form-box">
+        <h2>Yeni Hareket Ekle</h2>
+        <div class="form-grid">
+          <input type="date" id="tarih" />
+          <select id="tur">
+            <option value="gelir">Gelir</option>
+            <option value="gider">Gider</option>
+          </select>
+          <input type="text" id="kategori" placeholder="Kategori" />
+          <input type="text" id="aciklama" placeholder="Açıklama" />
+          <input type="number" id="tutar" placeholder="Tutar" />
+          <select id="hesap">
+            <option value="Nakit">Nakit</option>
+            <option value="Banka">Banka</option>
+            <option value="Kredi Kartı">Kredi Kartı</option>
+          </select>
+        </div>
+        <div style="margin-top:12px;">
+          <button onclick="hareketEkle()">Hareket Ekle</button>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h2>Yeni Borç / Alacak Ekle</h2>
+        <div class="form-grid">
+          <input type="text" id="kisi" placeholder="Kişi / Kurum" />
+          <select id="borcTip">
+            <option value="borc">Borç</option>
+            <option value="alacak">Alacak</option>
+          </select>
+          <input type="text" id="borcAciklama" placeholder="Açıklama" />
+          <input type="number" id="borcTutar" placeholder="Tutar" />
+          <input type="date" id="vade" />
+          <select id="durum">
+            <option value="Bekliyor">Bekliyor</option>
+            <option value="Ödenecek">Ödenecek</option>
+            <option value="Ödendi">Ödendi</option>
+            <option value="Tahsil Edildi">Tahsil Edildi</option>
+          </select>
+        </div>
+        <div style="margin-top:12px;">
+          <button onclick="borcEkle()">Borç / Alacak Ekle</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Hareketler</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Tür</th>
+            <th>Kategori</th>
+            <th>Açıklama</th>
+            <th>Tutar</th>
+            <th>Hesap</th>
+          </tr>
+        </thead>
+        <tbody id="hareketlerTablo"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Borç / Alacak Listesi</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Kişi</th>
+            <th>Tip</th>
+            <th>Açıklama</th>
+            <th>Tutar</th>
+            <th>Vade</th>
+            <th>Durum</th>
+          </tr>
+        </thead>
+        <tbody id="borclarTablo"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Hesaplar</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Hesap</th>
+            <th>Bakiye</th>
+          </tr>
+        </thead>
+        <tbody id="hesaplarTablo"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const hareketler = [
+      { tarih: '2026-04-01', tur: 'gelir', kategori: 'Maaş', aciklama: 'Nisan maaşı', tutar: 30000, hesap: 'Banka' },
+      { tarih: '2026-04-02', tur: 'gider', kategori: 'Market', aciklama: 'Haftalık market', tutar: -1750, hesap: 'Kredi Kartı' },
+      { tarih: '2026-04-03', tur: 'gider', kategori: 'Yemek', aciklama: 'Dışarıda yemek', tutar: -320, hesap: 'Nakit' }
+    ];
+
+    const borclar = [
+      { kisi: 'Ahmet', tip: 'alacak', aciklama: 'Borç verdim', tutar: 2000, vade: '2026-05-01', durum: 'Bekliyor' },
+      { kisi: 'Banka', tip: 'borc', aciklama: 'Kredi kartı ekstresi', tutar: 5400, vade: '2026-04-15', durum: 'Ödenecek' }
+    ];
+
+    const hesaplar = [
+      { hesap: 'Nakit', bakiye: 1250 },
+      { hesap: 'Banka', bakiye: 26000 },
+      { hesap: 'Kredi Kartı', bakiye: -5400 }
+    ];
+
+    function paraYazdir(tutar) {
+      return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(tutar);
+    }
+
+    function ozetHesapla() {
+      const toplamGelir = hareketler.filter(x => x.tur === 'gelir').reduce((a, b) => a + b.tutar, 0);
+      const toplamGider = Math.abs(hareketler.filter(x => x.tur === 'gider').reduce((a, b) => a + b.tutar, 0));
+      const netDurum = toplamGelir - toplamGider;
+      const toplamBorc = borclar.filter(x => x.tip === 'borc' && x.durum !== 'Ödendi').reduce((a, b) => a + b.tutar, 0);
+      const toplamAlacak = borclar.filter(x => x.tip === 'alacak' && x.durum !== 'Tahsil Edildi').reduce((a, b) => a + b.tutar, 0);
+
+      document.getElementById('ozetKartlari').innerHTML = `
+        <div class="card"><small>Toplam Gelir</small><div class="value positive">${paraYazdir(toplamGelir)}</div></div>
+        <div class="card"><small>Toplam Gider</small><div class="value negative">${paraYazdir(toplamGider)}</div></div>
+        <div class="card"><small>Net Durum</small><div class="value ${netDurum >= 0 ? 'positive' : 'negative'}">${paraYazdir(netDurum)}</div></div>
+        <div class="card"><small>Toplam Borç</small><div class="value negative">${paraYazdir(toplamBorc)}</div></div>
+        <div class="card"><small>Toplam Alacak</small><div class="value positive">${paraYazdir(toplamAlacak)}</div></div>
+      `;
+    }
+
+    function hareketleriGoster() {
+      document.getElementById('hareketlerTablo').innerHTML = hareketler.map(h => `
+        <tr>
+          <td>${h.tarih}</td>
+          <td><span class="badge ${h.tur === 'gelir' ? 'badge-gelir' : 'badge-gider'}">${h.tur}</span></td>
+          <td>${h.kategori}</td>
+          <td>${h.aciklama}</td>
+          <td class="${h.tutar >= 0 ? 'positive' : 'negative'}">${paraYazdir(h.tutar)}</td>
+          <td>${h.hesap}</td>
+        </tr>
+      `).join('');
+    }
+
+    function borclariGoster() {
+      document.getElementById('borclarTablo').innerHTML = borclar.map(b => `
+        <tr>
+          <td>${b.kisi}</td>
+          <td><span class="badge ${b.tip === 'borc' ? 'badge-borc' : 'badge-alacak'}">${b.tip}</span></td>
+          <td>${b.aciklama}</td>
+          <td>${paraYazdir(b.tutar)}</td>
+          <td>${b.vade}</td>
+          <td>${b.durum}</td>
+        </tr>
+      `).join('');
+    }
+
+    function hesaplariGoster() {
+      document.getElementById('hesaplarTablo').innerHTML = hesaplar.map(h => `
+        <tr>
+          <td>${h.hesap}</td>
+          <td class="${h.bakiye >= 0 ? 'positive' : 'negative'}">${paraYazdir(h.bakiye)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function hareketEkle() {
+      const tarih = document.getElementById('tarih').value;
+      const tur = document.getElementById('tur').value;
+      const kategori = document.getElementById('kategori').value;
+      const aciklama = document.getElementById('aciklama').value;
+      const tutarHam = Number(document.getElementById('tutar').value);
+      const hesap = document.getElementById('hesap').value;
+
+      if (!tarih || !kategori || !aciklama || !tutarHam) return alert('Lütfen tüm alanları doldur.');
+
+      const tutar = tur === 'gider' ? -Math.abs(tutarHam) : Math.abs(tutarHam);
+      hareketler.unshift({ tarih, tur, kategori, aciklama, tutar, hesap });
+
+      const hesapKaydi = hesaplar.find(h => h.hesap === hesap);
+      if (hesapKaydi) {
+        hesapKaydi.bakiye += tutar;
+      }
+
+      guncelle();
+    }
+
+    function borcEkle() {
+      const kisi = document.getElementById('kisi').value;
+      const tip = document.getElementById('borcTip').value;
+      const aciklama = document.getElementById('borcAciklama').value;
+      const tutar = Number(document.getElementById('borcTutar').value);
+      const vade = document.getElementById('vade').value;
+      const durum = document.getElementById('durum').value;
+
+      if (!kisi || !aciklama || !tutar || !vade) return alert('Lütfen tüm alanları doldur.');
+
+      borclar.unshift({ kisi, tip, aciklama, tutar: Math.abs(tutar), vade, durum });
+      guncelle();
+    }
+
+    function guncelle() {
+      ozetHesapla();
+      hareketleriGoster();
+      borclariGoster();
+      hesaplariGoster();
+    }
+
+    guncelle();
+  </script>
+</body>
+</html>
