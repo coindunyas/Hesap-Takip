@@ -6,66 +6,235 @@
   <title>Kişisel Hesap Takip Sistemi</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); transition: background .2s ease, color .2s ease; }
     :root {
-      --bg: #f4f6f8; --text: #1f2937; --card: #ffffff; --muted: #6b7280; --tableHead: #111827; --tableHeadText: #ffffff; --border: #d1d5db; --line: #e5e7eb; --shadow: 0 4px 14px rgba(0,0,0,0.08); --tabBg: #ffffff; --tabText: #111827;
+      --bg: #f4f6f8;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --line: #e5e7eb;
+      --border: #d1d5db;
+      --head: #111827;
+      --head-text: #ffffff;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --accent: #111827;
+      --accent-soft: #eef2ff;
     }
     body.dark {
-      --bg: #0f172a; --text: #e5e7eb; --card: #111827; --muted: #94a3b8; --tableHead: #1e293b; --tableHeadText: #e5e7eb; --border: #334155; --line: #1f2937; --shadow: 0 4px 14px rgba(0,0,0,0.35); --tabBg: #111827; --tabText: #e5e7eb;
+      --bg: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --card: #111827;
+      --line: #1f2937;
+      --border: #334155;
+      --head: #1e293b;
+      --head-text: #e5e7eb;
+      --shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      --accent: #e5e7eb;
+      --accent-soft: #172554;
     }
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-    h1, h2 { margin: 0 0 12px; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background .2s ease, color .2s ease;
+    }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1, h2, h3 { margin: 0 0 12px; }
     h1 { font-size: 32px; }
     h2 { font-size: 22px; }
     .muted { color: var(--muted); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .section { margin-top: 24px; }
-    .card, .form-box, table { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); }
-    .card, .form-box { padding: 18px; }
+    .grid { display: grid; gap: 16px; }
+    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .card, .form-box, table, .hero, .modal-card {
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .card, .form-box, .hero, .modal-card { padding: 18px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .hero-side {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .mini-stat {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+    }
+    .mini-stat small { color: var(--muted); display: block; margin-bottom: 8px; }
+    .mini-stat strong { font-size: 20px; }
     .card small { color: var(--muted); display: block; margin-bottom: 8px; }
     .value { font-size: 28px; font-weight: 700; }
     .positive { color: #15803d; }
     .negative { color: #b91c1c; }
-    table { width: 100%; border-collapse: collapse; overflow: hidden; }
-    th, td { padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; }
-    th { background: var(--tableHead); color: var(--tableHeadText); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+    th { background: var(--head); color: var(--head-text); }
     tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
     .badge-gelir { background: #dcfce7; color: #166534; }
     .badge-gider { background: #fee2e2; color: #991b1b; }
     .badge-borc { background: #fef3c7; color: #92400e; }
     .badge-alacak { background: #dbeafe; color: #1d4ed8; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
-    input, select, button, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--card); color: var(--text); }
-    button { background: #111827; color: white; font-weight: 700; cursor: pointer; border: none; }
+    .badge-transfer { background: #ede9fe; color: #5b21b6; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    input, select, button, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      background: var(--card);
+      color: var(--text);
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    button {
+      background: #111827;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+    }
     .btn-secondary { background: #e5e7eb; color: #111827; }
     body.dark .btn-secondary { background: #334155; color: #e5e7eb; }
     .btn-danger { background: #b91c1c; color: white; }
     .btn-warning { background: #92400e; color: white; }
-    .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
     .toolbar > * { width: auto; }
-    .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .inline-actions button { width: auto; padding: 8px 10px; font-size: 12px; border-radius: 8px; }
-    .tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
-    .tab-btn { width: auto; padding: 10px 14px; border-radius: 999px; background: var(--tabBg); color: var(--tabText); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .inline-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .inline-actions button {
+      width: auto;
+      padding: 8px 10px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .tab-btn {
+      width: auto;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
     .tab-btn.active { background: #111827; color: white; border-color: #111827; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-    .login-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.85); display: flex; align-items: center; justify-content: center; z-index: 50; }
-    .login-card { width: min(420px, 92vw); background: var(--card); padding: 24px; border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
+    .filters {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .search-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+    .login-overlay, .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+    }
+    .login-overlay.active, .modal.active { display: flex; }
+    .login-card, .modal-card {
+      width: min(860px, 94vw);
+      max-height: 88vh;
+      overflow: auto;
+    }
     .hidden { display: none !important; }
-    .info-box { background: #eff6ff; color: #1e3a8a; border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+    .info-box {
+      background: #eff6ff;
+      color: #1e3a8a;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 10px;
+    }
     body.dark .info-box { background: #172554; color: #dbeafe; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 60; }
-    .modal.active { display: flex; }
-    .modal-card { width: min(760px, 94vw); max-height: 85vh; overflow: auto; background: var(--card); color: va
+    .backup-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .backup-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    canvas { width: 100% !important; height: 280px !important; }
+    @media (max-width: 960px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-side { grid-template-columns: 1fr 1fr; }
+      .filters { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .hero-side { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <div id="loginOverlay" class="login-overlay hidden">
-    <div class="login-card">
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card form-box">
       <h2>Giriş Koruması</h2>
       <p class="muted">İlk kullanımda şifre belirleyebilirsin. Sonraki açılışlarda aynı şifre istenir.</p>
       <div class="form-grid">
@@ -76,7 +245,51 @@
         <button class="btn-secondary" onclick="sifresizDevamEt()">Şifresiz Devam Et</button>
         <button class="btn-warning" onclick="sifreOlusturVeyaGuncelle()">Şifre Oluştur / Değiştir</button>
       </div>
-      <div class="info-box">Bu koruma tarayıcı içindedir. Güçlü güvenlik değil, pratik gizlilik sağlar.</div>
+      <div class="info-box">Bu koruma tarayıcı içinde çalışır. Pratik gizlilik sağlar.</div>
+    </div>
+  </div>
+
+  <div id="cariModal" class="modal">
+    <div class="modal-card">
+      <div class="toolbar" style="justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">Cari Detay Geçmişi</h2>
+        <button class="btn-secondary" onclick="cariModalKapat()">Kapat</button>
+      </div>
+      <div id="cariModalIcerik"></div>
+    </div>
+  </div>
+
+  <div id="backupModal" class="modal">
+    <div class="modal-card">
+      <div class="toolbar" style="justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">Yedekleme ve Geri Yükleme</h2>
+        <button class="btn-secondary" onclick="backupModalKapat()">Kapat</button>
+      </div>
+      <div class="grid grid-2 section">
+        <div class="form-box">
+          <h3>Yeni Yedek Oluştur</h3>
+          <div class="form-grid">
+            <input type="text" id="backupName" placeholder="Yedek adı" />
+          </div>
+          <div class="toolbar">
+            <button onclick="yedekOlustur()">Tarayıcıya Yedekle</button>
+            <button class="btn-secondary" onclick="verileriDisaAktar()">JSON İndir</button>
+            <button class="btn-secondary" onclick="csvDisariAktar()">CSV İndir</button>
+          </div>
+        </div>
+        <div class="form-box">
+          <h3>Dosyadan Geri Yükle</h3>
+          <p class="muted">JSON yedeğini seçerek verileri geri yükleyebilirsin.</p>
+          <div class="toolbar">
+            <button class="btn-secondary" onclick="document.getElementById('jsonIceriAl').click()">JSON Seç</button>
+            <input id="jsonIceriAl" type="file" accept="application/json" class="hidden" onchange="verileriIceriAl(event)" />
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Kayıtlı Yerel Yedekler</h3>
+        <div id="backupList" class="backup-list"></div>
+      </div>
     </div>
   </div>
 
@@ -86,9 +299,7 @@
 
     <div class="toolbar">
       <button class="btn-secondary" onclick="temaDegistir()">Karanlık Mod</button>
-      <button class="btn-secondary" onclick="verileriDisaAktar()">JSON Dışa Aktar</button>
-      <button class="btn-secondary" onclick="csvDisariAkt).click()">JSON İçe Aktar</button>
-      <input id="jsonIceriAl" type="file" accept="application/json" class="hidden" onchange="verileriIceriAl(event)" />
+      <button class="btn-secondary" onclick="backupModalAc()">Yedekleme</button>
       <button class="btn-danger" onclick="tumVerileriSifirla()">Tüm Verileri Sıfırla</button>
     </div>
 
@@ -101,9 +312,37 @@
     </div>
 
     <div id="tab-genel" class="tab-panel active">
-      <div class="section">
-        <div class="grid" id="ozetKartlari"></div>
+      <div class="section hero">
+        <div class="form-box">
+          <h2>Genel Durum</h2>
+          <p class="muted">Nakit, banka, kart, cari ve yatırım özetin.</p>
+          <div class="grid grid-4" id="ozetKartlari"></div>
+        </div>
+        <div class="hero-side" id="dashboardMiniKartlar"></div>
       </div>
+
+      <div class="section">
+        <div class="form-box">
+          <h2>Hızlı Arama ve Filtre</h2>
+          <div class="filters">
+            <div class="search-wrap">
+              <input type="text" id="aramaMetni" placeholder="Açıklama, kategori, kişi, cari adı ara..." />
+              <button onclick="filtreleriTemizle()" class="btn-secondary">Temizle</button>
+            </div>
+            <select id="filtreTur" onchange="guncelle()">
+              <option value="">Tüm Türler</option>
+              <option value="gelir">Gelir</option>
+              <option value="gider">Gider</option>
+              <option value="transfer">Transfer</option>
+            </select>
+            <select id="filtreHesap" onchange="guncelle()">
+              <option value="">Tüm Hesaplar</option>
+            </select>
+            <input type="month" id="filtreAy" onchange="guncelle()" />
+          </div>
+        </div>
+      </div>
+
       <div class="section">
         <h2>Hesaplar</h2>
         <table>
@@ -120,16 +359,18 @@
           <div class="form-grid">
             <input type="date" id="taksitTarih" />
             <input type="text" id="taksitKategori" placeholder="Kategori" />
-            <input type="text" id="taksitAciklama" placeholder=" type="number" id="taksitToplam" placeholder="Toplam tutar" step="0.01" />
+            <input type="text" id="taksitAciklama" placeholder="Açıklama (opsiyonel)" />
+            <input type="number" id="taksitToplam" placeholder="Toplam tutar" step="0.01" />
             <input type="number" id="taksitAdet" placeholder="Taksit sayısı" step="1" />
             <select id="taksitHesap"></select>
           </div>
           <div class="toolbar"><button onclick="taksitliHarcamaEkle()">Taksit Oluştur</button></div>
         </div>
       </div>
+
       <div class="section">
         <div class="form-box">
-          <h2>Kredi Kartı Ödemesi / Transfer</h2>
+          <h2>Kredi Kartı Ödemesi / Hesap Transferi</h2>
           <div class="form-grid">
             <select id="transferKaynak"></select>
             <select id="transferHedef"></select>
@@ -139,7 +380,8 @@
           <div class="toolbar"><button onclick="transferYap()">Transfer Yap</button></div>
         </div>
       </div>
-      <div class="section two-col">
+
+      <div class="section grid grid-2">
         <div class="form-box">
           <h2>Yeni Hareket Ekle</h2>
           <div class="form-grid">
@@ -211,9 +453,10 @@
 
     <div id="tab-yatirim" class="tab-panel">
       <div class="section">
-        <div class="grid" id="yatirimOzetKartlari"></div>
+        <div class="grid grid-3" id="yatirimOzetKartlari"></div>
       </div>
-      <div class="section three-col">
+
+      <div class="section grid grid-3">
         <div class="form-box">
           <h2>Yeni Hesap Ekle</h2>
           <div class="form-grid">
@@ -236,7 +479,7 @@
 
         <div class="form-box">
           <h2>Kur Yönetimi</h2>
-          <p class="muted">Dolar / Euro için TCMB, altın / gümüş için manuel gram/TL gir.</p>
+          <p class="muted">Dolar / Euro için otomatik çekmeyi dener. Altın / gümüş manuel gram/TL olarak aktif kalır.</p>
           <div class="toolbar">
             <button onclick="canliDovizGetir()">Canlı USD / EUR Çek</button>
             <button class="btn-secondary" onclick="kurGuncelle()">Tüm Kurları Manuel Güncelle</button>
@@ -244,7 +487,7 @@
         </div>
       </div>
 
-      <div class="section two-col">
+      <div class="section grid grid-2">
         <div>
           <h2>Yatırım Listesi</h2>
           <table>
@@ -263,17 +506,9 @@
     </div>
 
     <div id="tab-rapor" class="tab-panel">
-      <div class="section two-col">
+      <div class="section grid grid-2">
         <div class="form-box"><h2>Kategori Bazlı Gider Dağılımı</h2><canvas id="kategoriPastaGrafigi"></canvas></div>
         <div class="form-box"><h2>Aylık Rapor Filtresi</h2>
-          <div class="form-grid">
-            <input type="month" id="raporAy" />
-            <button onclick="aylikRaporGuncelle()">Aylık Raporu Getir</buclass="info-box" id="aylikRaporKutusu">Bir ay seçip raporu görüntüleyebilirsin.</div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="form-box">
-          <h2>Aylık Rapor Filtresi</h2>
           <div class="form-grid">
             <input type="month" id="raporAy" />
             <button onclick="aylikRaporGuncelle()">Aylık Raporu Getir</button>
@@ -281,16 +516,20 @@
           <div class="info-box" id="aylikRaporKutusu">Bir ay seçip raporu görüntüleyebilirsin.</div>
         </div>
       </div>
+
       <div class="section">
-        <div class="grid" id="ozetKartlariRapor"></div>
+        <div class="grid grid-4" id="ozetKartlariRapor"></div>
       </div>
-      <div class="section two-col">
+
+      <div class="section grid grid-2">
         <div class="form-box"><h2>Varlık Dağılımı</h2><canvas id="yatirimDagilimGrafigi"></canvas></div>
         <div class="form-box"><h2>Nakit / Borç Özeti</h2><canvas id="finansOzetGrafigi"></canvas></div>
       </div>
+
       <div class="section">
         <div class="form-box"><h2>Yatırım Kâr / Zarar Grafiği</h2><canvas id="yatirimKarZararGrafigi"></canvas></div>
       </div>
+
       <div class="section">
         <h2>Yaklaşan Vadeler</h2>
         <table>
@@ -301,23 +540,16 @@
     </div>
   </div>
 
-  <div id="cariModal" class="modal">
-    <div class="modal-card">
-      <div class="toolbar" style="justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">Cari Detay Geçmişi</h2>
-        <button class="btn-secondary" onclick="cariModalKapat()">Kapat</button>
-      </div>
-      <div id="cariModalIcerik"></div>
-    </div>
-  </div>
-
   <script>
-    const STORAGE_KEY = 'hesapTakipV2';
-    const PASSWORD
+    const STORAGE_KEY = 'hesapTakipV3';
+    const PASSWORD_KEY = 'hesapTakipSifreV1';
+    const BACKUPS_KEY = 'hesapTakipBackupsV1';
 
     function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
     function sayi(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
     function paraYazdir(tutar) { return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(sayi(tutar)); }
+    function bugunStr() { return new Date().toISOString().slice(0, 10); }
+    function ayBaslangicStr() { return bugunStr().slice(0, 7); }
 
     let hareketler = [];
     let borclar = [];
@@ -326,7 +558,7 @@
       { id: uid(), hesap: 'Banka', tip: 'Banka', bakiye: 0 },
       { id: uid(), hesap: 'Kredi Kartı', tip: 'Kredi Kartı', bakiye: 0 }
     ];
-    let yatirimlar = []; // {id, varlik, miktar, maliyetFiyat}
+    let yatirimlar = [];
     let kurlar = [
       { varlik: 'Altın', fiyat: 0, kaynak: 'Manuel (Gram/TL)' },
       { varlik: 'Gümüş', fiyat: 0, kaynak: 'Manuel (Gram/TL)' },
@@ -334,44 +566,40 @@
       { varlik: 'Euro', fiyat: 0, kaynak: 'TCMB/Manuel' }
     ];
     let cariler = [];
+
     let yatirimDagilimChart = null;
     let finansOzetChart = null;
     let yatirimKarZararChart = null;
     let kategoriPastaChart = null;
 
-    function bugunStr() {
-      return new Date().toISOString().slice(0, 10);
-    }
-
     function temaYukle() {
       const tema = localStorage.getItem('hesapTakipTema');
       if (tema === 'dark') document.body.classList.add('dark');
     }
-
     function temaDegistir() {
       document.body.classList.toggle('dark');
-      localStorage.setItem('hesapTakipTema', document.body.classList.contains('dark') function varsayilanTarihleriDoldur() {
-      const bugun = bugunStr();
-      ['tarih', 'vade', 'cariTarih'].forEach(id => {
-        const el = document.getElelue) el.value = bugun;
-      });
+      localStorage.setItem('hesapTakipTema', document.body.classList.contains('dark') ? 'dark' : 'light');
     }
 
-    function hesapSelectleriniGuncelle() {
-      const el = document.getElementById('hesap');
-      const kaynak = document.getElementById('transferKaynak');
-      const hedef = document.getElementById('transferHedef');
-      const options = hesaplar.map(h => `<option value="${h.hesap}">${h.hesap}</option>`).join('');
-      if (el) el.innerHTML = options;
-      if (kaynak) kaynak.innerHTML = options;
-      if (hedef) hedef.innerHTML = options;
-    }">${h.hesap}</option>`).join('');
+    function varsayilanTarihleriDoldur() {
+      const bugun = bugunStr();
+      ['tarih', 'vade', 'cariTarih', 'transferTarih', 'taksitTarih'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = bugun;
+      });
+      const raporAyEl = document.getElementById('raporAy');
+      if (raporAyEl && !raporAyEl.value) raporAyEl.value = ayBaslangicStr();
+      const filtreAyEl = document.getElementById('filtreAy');
+      if (filtreAyEl && !filtreAyEl.value) filtreAyEl.value = '';
+    }
+
+    function getPayload() {
+      return { hareketler, borclar, hesaplar, yatirimlar, kurlar, cariler };
     }
 
     function verileriKaydet() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ hareketler, borclar, hesaplar, yatirimlar, kurlar, cariler }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(getPayload()));
     }
-
     function verileriYukle() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
@@ -386,6 +614,128 @@
       } catch (e) {
         console.error(e);
       }
+    }
+
+    function yedekleriGetir() {
+      try {
+        return JSON.parse(localStorage.getItem(BACKUPS_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+    function yedekleriKaydet(list) {
+      localStorage.setItem(BACKUPS_KEY, JSON.stringify(list));
+    }
+    function yedekOlustur() {
+      const name = document.getElementById('backupName').value.trim() || `Yedek ${new Date().toLocaleString('tr-TR')}`;
+      const list = yedekleriGetir();
+      list.unshift({ id: uid(), name, createdAt: new Date().toISOString(), payload: getPayload() });
+      yedekleriKaydet(list.slice(0, 20));
+      document.getElementById('backupName').value = '';
+      backupListesiniGoster();
+      alert('Yerel yedek oluşturuldu.');
+    }
+    function yedekYukle(id) {
+      const item = yedekleriGetir().find(x => x.id === id);
+      if (!item) return;
+      hareketler = item.payload.hareketler || [];
+      borclar = item.payload.borclar || [];
+      hesaplar = item.payload.hesaplar || hesaplar;
+      yatirimlar = item.payload.yatirimlar || [];
+      kurlar = item.payload.kurlar || kurlar;
+      cariler = item.payload.cariler || [];
+      guncelle();
+      alert('Yedek geri yüklendi.');
+    }
+    function yedekSil(id) {
+      const list = yedekleriGetir().filter(x => x.id !== id);
+      yedekleriKaydet(list);
+      backupListesiniGoster();
+    }
+    function backupListesiniGoster() {
+      const el = document.getElementById('backupList');
+      const list = yedekleriGetir();
+      if (!el) return;
+      el.innerHTML = list.length ? list.map(item => `
+        <div class="backup-item">
+          <div>
+            <strong>${item.name}</strong><br>
+            <span class="muted">${new Date(item.createdAt).toLocaleString('tr-TR')}</span>
+          </div>
+          <div class="inline-actions">
+            <button class="btn-secondary" onclick="yedekYukle('${item.id}')">Yükle</button>
+            <button class="btn-danger" onclick="yedekSil('${item.id}')">Sil</button>
+          </div>
+        </div>`).join('') : '<div class="info-box">Kayıtlı yerel yedek yok.</div>';
+    }
+    function backupModalAc() {
+      backupListesiniGoster();
+      document.getElementById('backupModal').classList.add('active');
+    }
+    function backupModalKapat() {
+      document.getElementById('backupModal').classList.remove('active');
+    }
+
+    function csvEscape(v) {
+      const s = String(v ?? '');
+      return '"' + s.replaceAll('"', '""') + '"';
+    }
+    function csvDisariAktar() {
+      const sections = [];
+      const pushSection = (name, rows) => {
+        sections.push(name);
+        if (rows.length) {
+          const headers = Object.keys(rows[0]);
+          sections.push(headers.join(','));
+          rows.forEach(r => sections.push(headers.map(h => csvEscape(r[h])).join(',')));
+        }
+        sections.push('');
+      };
+      pushSection('hareketler', hareketler);
+      pushSection('borclar', borclar);
+      pushSection('hesaplar', hesaplar);
+      pushSection('yatirimlar', yatirimlar);
+      pushSection('kurlar', kurlar);
+      pushSection('cariler', cariler.map(c => ({ id: c.id, ad: c.ad, bakiye: c.bakiye, sonIslem: c.sonIslem })));
+      const blob = new Blob([sections.join('
+')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hesap-takip-rapor.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function verileriDisaAktar() {
+      const blob = new Blob([JSON.stringify(getPayload(), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hesap-takip-yedek.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function verileriIceriAl(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          hareketler = Array.isArray(data.hareketler) ? data.hareketler : [];
+          borclar = Array.isArray(data.borclar) ? data.borclar : [];
+          hesaplar = Array.isArray(data.hesaplar) && data.hesaplar.length ? data.hesaplar : hesaplar;
+          yatirimlar = Array.isArray(data.yatirimlar) ? data.yatirimlar : [];
+          kurlar = Array.isArray(data.kurlar) && data.kurlar.length ? data.kurlar : kurlar;
+          cariler = Array.isArray(data.cariler) ? data.cariler : [];
+          guncelle();
+          alert('Veriler içe aktarıldı.');
+        } catch (err) {
+          alert('JSON okunamadı.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
     }
 
     function tumVerileriSifirla() {
@@ -409,17 +759,102 @@
       guncelle();
     }
 
+    function girisKorumasiniBaslat() {
+      if (!localStorage.getItem(PASSWORD_KEY)) return;
+      document.getElementById('loginOverlay').classList.add('active');
+    }
+    function girisYap() {
+      const pass = document.getElementById('loginPassword').value;
+      if (pass === localStorage.getItem(PASSWORD_KEY)) {
+        document.getElementById('loginOverlay').classList.remove('active');
+        document.getElementById('loginPassword').value = '';
+      } else {
+        alert('Şifre yanlış.');
+      }
+    }
+    function sifresizDevamEt() {
+      document.getElementById('loginOverlay').classList.remove('active');
+    }
+    function sifreOlusturVeyaGuncelle() {
+      const yeni = prompt('Yeni şifre');
+      if (!yeni) return;
+      localStorage.setItem(PASSWORD_KEY, yeni);
+      alert('Şifre kaydedildi.');
+      document.getElementById('loginOverlay').classList.add('active');
+    }
+
+    function cariModalKapat() {
+      document.getElementById('cariModal').classList.remove('active');
+    }
+
+    function sekmeAc(ad, btn) {
+      document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+      const panel = document.getElementById(`tab-${ad}`);
+      if (panel) panel.classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    function hesapSelectleriniGuncelle() {
+      const options = hesaplar.map(h => `<option value="${h.hesap}">${h.hesap}</option>`).join('');
+      ['hesap', 'transferKaynak', 'transferHedef', 'taksitHesap'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = options;
+      });
+      const filtreHesap = document.getElementById('filtreHesap');
+      if (filtreHesap) {
+        const mevcut = filtreHesap.value;
+        filtreHesap.innerHTML = `<option value="">Tüm Hesaplar</option>${options}`;
+        filtreHesap.value = mevcut;
+      }
+    }
+
     function formTemizle() {
-      ['kategori','aciklama','tutar','kisi','borcAciklama','borcTutar','yeniHesapAdi','yeniHesapBakiye','cariAd','cariTutar','cariAciklama','yatirimMiktar','yatirimMaliyetFiyat'].forEach(id => {
+      ['kategori','aciklama','tutar','kisi','borcAciklama','borcTutar','yeniHesapAdi','yeniHesapBakiye','cariAd','cariTutar','cariAciklama','yatirimMiktar','yatirimMaliyetFiyat','taksitKategori','taksitAciklama','taksitToplam','taksitAdet','transferTutar'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
       varsayilanTarihleriDoldur();
     }
 
+    function filtreMetni() {
+      return (document.getElementById('aramaMetni')?.value || '').toLocaleLowerCase('tr-TR').trim();
+    }
+    function filtreleriTemizle() {
+      ['aramaMetni', 'filtreAy'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      ['filtreTur', 'filtreHesap'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      guncelle();
+    }
+    function hareketFiltreliListe() {
+      const metin = filtreMetni();
+      const tur = document.getElementById('filtreTur')?.value || '';
+      const hesap = document.getElementById('filtreHesap')?.value || '';
+      const ay = document.getElementById('filtreAy')?.value || '';
+      return hareketler.filter(x => {
+        const textBlob = [x.kategori, x.aciklama, x.hesap, x.tur].join(' ').toLocaleLowerCase('tr-TR');
+        const metinOk = !metin || textBlob.includes(metin);
+        const turOk = !tur || x.tur === tur;
+        const hesapOk = !hesap || x.hesap === hesap;
+        const ayOk = !ay || (x.tarih || '').startsWith(ay);
+        return metinOk && turOk && hesapOk && ayOk;
+      });
+    }
+    function borcFiltreliListe() {
+      const metin = filtreMetni();
+      const ay = document.getElementById('filtreAy')?.value || '';
+      return borclar.filter(x => {
+        const textBlob = [x.kisi, x.aciklama, x.tip, x.durum].join(' ').toLocaleLowerCase('tr-TR');
+        const metinOk = !metin || textBlob.includes(metin);
+        const ayOk = !ay || (x.vade || '').startsWith(ay);
+        return metinOk && ayOk;
+      });
+    }
+
     function ozetHesapla() {
       const toplamGelir = hareketler.filter(x => x.tur === 'gelir').reduce((a, b) => a + sayi(b.tutar), 0);
-      const toplamGider = Math.abs(hareketler.filter(x => x.tur === 'gider').reduce((auce((a, b) => a + sayi(b.tutar), 0);
+      const toplamGider = Math.abs(hareketler.filter(x => x.tur === 'gider').reduce((a, b) => a + sayi(b.tutar), 0));
+      const netDurum = toplamGelir - toplamGider;
+      const toplamBorc = borclar.filter(x => x.tip === 'borc' && x.durum !== 'Ödendi').reduce((a, b) => a + sayi(b.tutar), 0);
       const toplamAlacak = borclar.filter(x => x.tip === 'alacak' && x.durum !== 'Tahsil Edildi').reduce((a, b) => a + sayi(b.tutar), 0);
       const toplamCariAlacak = cariler.filter(x => x.bakiye > 0).reduce((a, b) => a + sayi(b.bakiye), 0);
       const toplamCariBorc = Math.abs(cariler.filter(x => x.bakiye < 0).reduce((a, b) => a + sayi(b.bakiye), 0));
@@ -436,17 +871,17 @@
         <div class="card"><small>Toplam Gelir</small><div class="value positive">${paraYazdir(toplamGelir)}</div></div>
         <div class="card"><small>Toplam Gider</small><div class="value negative">${paraYazdir(toplamGider)}</div></div>
         <div class="card"><small>Net Durum</small><div class="value ${netDurum >= 0 ? 'positive' : 'negative'}">${paraYazdir(netDurum)}</div></div>
-        <div class="card"><small>Toplam Borç</small><div class="value negative">${paraYazdir(toplamBorc)}</div></div>
-        <div class="card"><small>Toplam Alacak</small><div class="value positive">${paraYazdir(toplamAlacak)}</div></div>
-        <div class="card"><small>Toplam Cari Alacak</small><div class="value positive">${paraYazdir(toplamCariAlacak)}</div></div>
-        <div class="card"><small>Toplam Cari Borç</small><div class="value negative">${paraYazdir(toplamCariBorc)}</div></div>
-        <div class="card"><small>Toplam Banka</small><div class="value ${toplamBanka >= 0 ? 'positive' : 'negative'}">${paraYazdir(toplamBanka)}</div></div>
-        <div class="card"><small>Toplam Nakit</small><div class="value ${toplamNakit >= 0 ? 'positive' : 'negative'}">${paraYazdir(toplamNakit)}</div></div>
-        <div class="card"><small>Toplam Kart Borcu</small><div class="value negative">${paraYazdir(toplamKart)}</div></div>
-        <div class="card"><small>Toplam Yatırım</small><div class="value positive">${paraYazdir(toplamYatirim)}</div></div>
-      `;
+        <div class="card"><small>Toplam Yatırım</small><div class="value positive">${paraYazdir(toplamYatirim)}</div></div>`;
       document.getElementById('ozetKartlari').innerHTML = kartlarHtml;
       document.getElementById('ozetKartlariRapor').innerHTML = kartlarHtml;
+
+      document.getElementById('dashboardMiniKartlar').innerHTML = `
+        <div class="mini-stat"><small>Toplam Banka</small><strong class="${toplamBanka >= 0 ? 'positive' : 'negative'}">${paraYazdir(toplamBanka)}</strong></div>
+        <div class="mini-stat"><small>Toplam Nakit</small><strong class="${toplamNakit >= 0 ? 'positive' : 'negative'}">${paraYazdir(toplamNakit)}</strong></div>
+        <div class="mini-stat"><small>Toplam Kart Borcu</small><strong class="negative">${paraYazdir(toplamKart)}</strong></div>
+        <div class="mini-stat"><small>Cari Net</small><strong class="${(toplamCariAlacak - toplamCariBorc) >= 0 ? 'positive' : 'negative'}">${paraYazdir(toplamCariAlacak - toplamCariBorc)}</strong></div>
+        <div class="mini-stat"><small>Toplam Borç</small><strong class="negative">${paraYazdir(toplamBorc)}</strong></div>
+        <div class="mini-stat"><small>Toplam Alacak</small><strong class="positive">${paraYazdir(toplamAlacak)}</strong></div>`;
 
       const toplamMaliyet = yatirimlar.reduce((a,b)=>a + (sayi(b.miktar)*sayi(b.maliyetFiyat)),0);
       const toplamGuncel = yatirimlar.reduce((a,b)=>{
@@ -455,31 +890,35 @@
         return a + (sayi(b.miktar)*fiyat);
       },0);
       const toplamKar = toplamGuncel - toplamMaliyet;
-      const yHtml = `
+      document.getElementById('yatirimOzetKartlari').innerHTML = `
         <div class="card"><small>Toplam Maliyet</small><div class="value">${paraYazdir(toplamMaliyet)}</div></div>
         <div class="card"><small>Güncel Değer</small><div class="value positive">${paraYazdir(toplamGuncel)}</div></div>
-        <div class="card"><small>Kâr / Zarar</small><div class="value ${toplamKar>=0?'positive':'negative'}">${paraYazdir(toplamKar)}</div></div>
-      `;
-      const yEl = document.getElementById('yatirimOzetKartlari');
-      if (yEl) yEl.innerHTML = yHtml;
+        <div class="card"><small>Kâr / Zarar</small><div class="value ${toplamKar>=0?'positive':'negative'}">${paraYazdir(toplamKar)}</div></div>`;
     }
 
     function hareketleriGoster() {
-      document.getElementById('hareketlerTablo').innerHTML = hareketler.map((h, index) => `
+      const liste = hareketFiltreliListe();
+      document.getElementById('hareketlerTablo').innerHTML = liste.map((h, index) => {
+        const gercekIndex = hareketler.findIndex(x => x.id === h.id);
+        const badgeClass = h.tur === 'gelir' ? 'badge-gelir' : h.tur === 'gider' ? 'badge-gider' : 'badge-transfer';
+        return `
         <tr>
           <td>${h.tarih || ''}</td>
-          <td><span class="badge ${h.tur === 'gelir' ? 'badge-gelir' : 'badge-gider'}">${h.tur || ''}</span></td>
+          <td><span class="badge ${badgeClass}">${h.tur || ''}</span></td>
           <td>${h.kategori || ''}</td>
           <td>${h.aciklama || '-'}</td>
-          <td class="${sayi(h.tutar) >= 0 ? 'positive' : 'negative'}">${paraYazdir(h.tutar)}</td>
+          <td class="${sayi(h.tutar) >= 0 ? 'positive' : 'negative'}">${h.tur === 'transfer' ? '-' : paraYazdir(h.tutar)}</td>
           <td>${h.hesap || ''}</td>
-          <td><div class="inline-actions"><button class="btn-secondary" onclick="hareketDuzenle(${index})">Düzenle</button><button class="btn-danger" onclick="hareketSil(${index})">Sil</button></div></td>
-        </tr>
-      `).join('');
+          <td><div class="inline-actions"><button class="btn-secondary" onclick="hareketDuzenle(${gercekIndex})">Düzenle</button><button class="btn-danger" onclick="hareketSil(${gercekIndex})">Sil</button></div></td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
     }
 
     function borclariGoster() {
-      document.getElementById('borclarTablo').innerHTML = borclar.map((b, index) => `
+      const liste = borcFiltreliListe();
+      document.getElementById('borclarTablo').innerHTML = liste.map((b) => {
+        const index = borclar.findIndex(x => x.id === b.id);
+        return `
         <tr>
           <td>${b.kisi || ''}</td>
           <td><span class="badge ${b.tip === 'borc' ? 'badge-borc' : 'badge-alacak'}">${b.tip || ''}</span></td>
@@ -488,8 +927,8 @@
           <td>${b.vade || ''}</td>
           <td>${b.durum || ''}</td>
           <td><div class="inline-actions"><button class="btn-secondary" onclick="borcDuzenle(${index})">Düzenle</button><button class="btn-danger" onclick="borcSil(${index})">Sil</button></div></td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
     }
 
     function hesaplariGoster() {
@@ -499,8 +938,7 @@
           <td>${h.tip || ''}</td>
           <td class="${sayi(h.bakiye) >= 0 ? 'positive' : 'negative'}">${paraYazdir(h.bakiye)}</td>
           <td><div class="inline-actions"><button class="btn-secondary" onclick="hesapDuzenle(${index})">Düzenle</button><button class="btn-danger" onclick="hesapSil(${index})">Sil</button></div></td>
-        </tr>
-      `).join('');
+        </tr>`).join('');
     }
 
     function yatirimlariGoster() {
@@ -520,7 +958,7 @@
           <td class="${karZarar >= 0 ? 'positive' : 'negative'}">${paraYazdir(karZarar)}</td>
           <td><div class="inline-actions"><button class="btn-secondary" onclick="yatirimDuzenle(${index})">Düzenle</button><button class="btn-danger" onclick="yatirimSil(${index})">Sil</button></div></td>
         </tr>`;
-      }).join('');
+      }).join('') || '<tr><td colspan="7">Kayıt yok.</td></tr>';
     }
 
     function kurlariGoster() {
@@ -530,30 +968,33 @@
           <td>${paraYazdir(k.fiyat)}</td>
           <td>${k.kaynak}</td>
           <td><div class="inline-actions"><button class="btn-secondary" onclick="tekKurDuzenle(${index})">Düzenle</button></div></td>
-        </tr>
-      `).join('');
+        </tr>`).join('');
     }
 
     function carileriGoster() {
-      document.getElementById('carilerTablo').innerHTML = cariler.map((c, index) => `
+      const metin = filtreMetni();
+      const liste = cariler.filter(c => !metin || [c.ad, c.sonIslem].join(' ').toLocaleLowerCase('tr-TR').includes(metin));
+      document.getElementById('carilerTablo').innerHTML = liste.map((c) => {
+        const index = cariler.findIndex(x => x.id === c.id);
+        return `
         <tr>
           <td>${c.ad || ''}</td>
           <td class="${sayi(c.bakiye) >= 0 ? 'positive' : 'negative'}">${paraYazdir(c.bakiye)}</td>
           <td>${c.sonIslem || '-'}</td>
           <td><div class="inline-actions"><button class="btn-secondary" onclick="cariDetayAc(${index})">Detay</button><button class="btn-secondary" onclick="cariDuzenle(${index})">Düzenle</button><button class="btn-danger" onclick="cariSil(${index})">Sil</button></div></td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('') || '<tr><td colspan="4">Kayıt yok.</td></tr>';
     }
-
     function cariDetayAc(index) {
       const cari = cariler[index];
       const hedef = document.getElementById('cariModalIcerik');
-      const hareketlerHtml = iye)}</div><div class="section">${hareketlerHtml}</div>`;
+      const hareketlerHtml = (cari.hareketler || []).length ? `
+        <table>
+          <thead><tr><th>Tarih</th><th>Tip</th><th>Açıklama</th><th>Tutar</th></tr></thead>
+          <tbody>${cari.hareketler.map(h => `<tr><td>${h.tarih || ''}</td><td>${h.tip || ''}</td><td>${h.aciklama || '-'}</td><td>${paraYazdir(h.tutar)}</td></tr>`).join('')}</tbody>
+        </table>` : '<div class="info-box">Cari hareket kaydı yok.</div>';
+      hedef.innerHTML = `<div class="section"><strong>Cari:</strong> ${cari.ad}<br><strong>Bakiye:</strong> ${paraYazdir(cari.bakiye)}</div><div class="section">${hareketlerHtml}</div>`;
       document.getElementById('cariModal').classList.add('active');
-    }
-
-    function cariModalKapat() {
-      document.getElementById('cariModal').classList.remove('active');
     }
 
     function hareketEkle() {
@@ -571,17 +1012,19 @@
       formTemizle();
       guncelle();
     }
-
     function hareketSil(index) {
       const kayit = hareketler[index];
-      const hesapKaydi = hesaplar.find(h => h.hesap === kayit.hesap);
-      if (hesapKaydi) hesapKaydi.bakiye -= sayi(kayit.tutar);
+      if (!kayit) return;
+      if (kayit.tur !== 'transfer') {
+        const hesapKaydi = hesaplar.find(h => h.hesap === kayit.hesap);
+        if (hesapKaydi) hesapKaydi.bakiye -= sayi(kayit.tutar);
+      }
       hareketler.splice(index, 1);
       guncelle();
     }
-
     function hareketDuzenle(index) {
       const k = hareketler[index];
+      if (!k || k.tur === 'transfer') return alert('Transfer kayıtlarını transfer formundan yönet.');
       const yeniTarih = prompt('Tarih', k.tarih || '');
       const yeniTur = prompt('Tür (gelir/gider)', k.tur || '');
       const yeniKategori = prompt('Kategori', k.kategori || '');
@@ -602,6 +1045,46 @@
       guncelle();
     }
 
+    function taksitliHarcamaEkle() {
+      const tarih = document.getElementById('taksitTarih').value || bugunStr();
+      const kategori = document.getElementById('taksitKategori').value.trim();
+      const aciklama = document.getElementById('taksitAciklama').value.trim();
+      const toplam = sayi(document.getElementById('taksitToplam').value);
+      const adet = Math.max(1, Math.floor(sayi(document.getElementById('taksitAdet').value)));
+      const hesap = document.getElementById('taksitHesap').value;
+      if (!kategori || !toplam || !adet || !hesap) return alert('Taksit bilgilerini doldur.');
+      const aylik = Number((toplam / adet).toFixed(2));
+      const baslangic = new Date(tarih);
+      for (let i = 0; i < adet; i++) {
+        const d = new Date(baslangic);
+        d.setMonth(d.getMonth() + i);
+        const t = d.toISOString().slice(0, 10);
+        const sonTaksit = i === adet - 1;
+        const tutar = sonTaksit ? -(Number((toplam - (aylik * (adet - 1))).toFixed(2))) : -aylik;
+        hareketler.unshift({ id: uid(), tarih: t, tur: 'gider', kategori, aciklama: `${aciklama || 'Taksitli harcama'} (${i+1}/${adet})`, tutar, hesap, taksitGrup: `${tarih}-${kategori}-${toplam}-${adet}` });
+      }
+      const hesapKaydi = hesaplar.find(h => h.hesap === hesap);
+      if (hesapKaydi) hesapKaydi.bakiye += -toplam;
+      formTemizle();
+      guncelle();
+    }
+
+    function transferYap() {
+      const kaynak = document.getElementById('transferKaynak').value;
+      const hedef = document.getElementById('transferHedef').value;
+      const tutar = sayi(document.getElementById('transferTutar').value);
+      const tarih = document.getElementById('transferTarih').value;
+      if (!kaynak || !hedef || !tutar || kaynak === hedef) return alert('Transfer bilgilerini doğru doldur.');
+      const k1 = hesaplar.find(h => h.hesap === kaynak);
+      const k2 = hesaplar.find(h => h.hesap === hedef);
+      if (!k1 || !k2) return;
+      k1.bakiye -= tutar;
+      k2.bakiye += tutar;
+      hareketler.unshift({ id: uid(), tarih, tur: 'transfer', kategori: 'Transfer', aciklama: `${kaynak} → ${hedef}`, tutar: 0, hesap: hedef, transferMeta: { kaynak, hedef, tutar } });
+      formTemizle();
+      guncelle();
+    }
+
     function borcEkle() {
       const kisi = document.getElementById('kisi').value.trim();
       const tip = document.getElementById('borcTip').value;
@@ -614,10 +1097,10 @@
       formTemizle();
       guncelle();
     }
-
     function borcSil(index) { borclar.splice(index, 1); guncelle(); }
     function borcDuzenle(index) {
       const k = borclar[index];
+      if (!k) return;
       const yeniKisi = prompt('Kişi / Kurum', k.kisi || '');
       const yeniTip = prompt('Tip (borc/alacak)', k.tip || '');
       const yeniAciklama = prompt('Açıklama', k.aciklama || '');
@@ -644,10 +1127,10 @@
       formTemizle();
       guncelle();
     }
-
     function hesapSil(index) { hesaplar.splice(index, 1); guncelle(); }
     function hesapDuzenle(index) {
       const k = hesaplar[index];
+      if (!k) return;
       const eskiAd = k.hesap;
       const yeniAd = prompt('Hesap adı', k.hesap || '');
       const yeniTip = prompt('Hesap tipi', k.tip || '');
@@ -683,10 +1166,10 @@
       formTemizle();
       guncelle();
     }
-
     function cariSil(index) { cariler.splice(index, 1); guncelle(); }
     function cariDuzenle(index) {
       const k = cariler[index];
+      if (!k) return;
       const yeniAd = prompt('Cari adı', k.ad || '');
       const yeniBakiye = prompt('Cari bakiye', k.bakiye || 0);
       const yeniSonIslem = prompt('Son işlem', k.sonIslem || '');
@@ -706,10 +1189,10 @@
       formTemizle();
       guncelle();
     }
-
     function yatirimSil(index) { yatirimlar.splice(index, 1); guncelle(); }
     function yatirimDuzenle(index) {
       const k = yatirimlar[index];
+      if (!k) return;
       const yeniVarlik = prompt('Varlık', k.varlik || '');
       const yeniMiktar = prompt('Miktar', k.miktar || 0);
       const yeniMaliyet = prompt('Maliyet fiyatı', k.maliyetFiyat || 0);
@@ -719,7 +1202,6 @@
       k.maliyetFiyat = sayi(yeniMaliyet);
       guncelle();
     }
-
     function tekKurDuzenle(index) {
       const k = kurlar[index];
       const yeniFiyat = prompt(`${k.varlik} fiyatı`, k.fiyat || 0);
@@ -728,16 +1210,14 @@
       k.kaynak = (k.varlik === 'Altın' || k.varlik === 'Gümüş') ? 'Manuel (Gram/TL)' : 'Manuel';
       guncelle();
     }
-
     function kurGuncelle() { kurlar.forEach((_, i) => tekKurDuzenle(i)); }
 
-    async async function canliDovizGetir() {
+    async function canliDovizGetir() {
       const proxyUrls = [
         'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.tcmb.gov.tr/kurlar/today.xml'),
         'https://cors.isomorphic-git.org/https://www.tcmb.gov.tr/kurlar/today.xml',
         'https://www.tcmb.gov.tr/kurlar/today.xml'
       ];
-
       let text = '';
       let lastError = null;
       for (const url of proxyUrls) {
@@ -750,13 +1230,11 @@
           lastError = e;
         }
       }
-
       if (!text) {
         console.error(lastError);
         alert('Canlı kur alınamadı. Dolar ve Euro için manuel giriş kullanabilirsin.');
         return;
       }
-
       try {
         const xml = new DOMParser().parseFromString(text, 'application/xml');
         const nodes = Array.from(xml.querySelectorAll('Currency'));
@@ -769,101 +1247,12 @@
         if (usdKayit && usdTry) { usdKayit.fiyat = usdTry; usdKayit.kaynak = 'TCMB'; }
         if (eurKayit && eurTry) { eurKayit.fiyat = eurTry; eurKayit.kaynak = 'TCMB'; }
         guncelle();
-        alert('USD ve EUR kurları güncellendi. Altın ve gümüş manuel gram/TL olarak kalır.');
+        alert('USD ve EUR kurları güncellendi.');
       } catch (e) {
         console.error(e);
         alert('Kur verisi çözümlenemedi. Manuel giriş kullanabilirsin.');
       }
     }
-
-    function grafikleriGuncelle() {
-      const yatirimEtiketleri = yatirimlar.map(x => x.varlik);
-      const yatirimDegerleri = yatirimlar.map(x => {
-        const kur = kurlar.find(k => k.varlik === x.varlik);
-        const guncelFiyat = kur ? sayi(kur.fiyat) : sayi(x.maliyetFiyat);
-        return Number((sayi(x.miktar) * guncelFiyat).toFixed(2));
-      });
-      const finansEtiketleri = ['Banka', 'Nakit', 'Kart Borcu', 'Cari Alacak', 'Cari Borç'];
-      const finansDegerleri = [
-        hesaplar.filter(x => x.tip === 'Banka').reduce((a, b) => a + sayi(b.bakiye), 0),
-        hesaplar.filter(x => x.tip === 'Nakit').reduce((a, b) => a + sayi(b.bakiye), 0),
-        Math.abs(hesaplar.filter(x => x.tip === 'Kredi Kartı').reduce((a, b) => a + sayi(b.bakiye), 0)),
-        cariler.filter(x => x.bakiye > 0).reduce((a, b) => a + sayi(b.bakiye), 0),
-        Math.abs(cariler.filter(x => x.bakiye < 0).reduce((a, b) => a + sayi(b.bakiye), 0))
-      ];
-      const karZararEtiketleri = yatirimlar.map(x => x.varlik);
-      const karZararDegerleri = yatirimlar.map(x => {
-        const kur = kurlar.find(k => k.varlik === x.varlik);
-        const guncelFiyat = kur ? sayi(kur.fiyat) : sayi(x.maliyetFiyat);
-        return Number(((sayi(x.miktar) * guncelFiyat) - (sayi(x.miktar) * sayi(x.maliyetFiyat))).toFixed(2));
-r);
-      pushSection('kurlar', kurlar);
-      pushSection('cariler', cariler.map(c => ({ id: c.id, ad: c.ad, bakiye: c.bakiye, sonIslem: c.sonIslem })));
-      const blob = new Blob([sections.join('\n')], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'hesap-takip-rapor.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function verileriDisaAktar() {
-      const blob = new Blob([JSON.stringify({ hareketler, borclar, hesaplar, yatirimlar, kurlar, cariler }, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'hesap-takip-yedek.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function verileriIceriAl(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const data = JSON.parse(e.target.result);
-          hareketler = Array.isArray(data.hareketler) ? data.hareketler : [];
-          borclar = Array.isArray(data.borclar) ? data.borclar : [];
-          hesaplar = Array.isArray(data.hesaplar) && data.hesaplar.length ? data.hesaplar : hesaplar;
-          yatirimlar = Array.isArray(data.yatirimlar) ? data.yatirimlar : [];
-          kurlar = Array.isArray(data.kurlar) && data.kurlar.length ? data.kurlar : kurlar;
-          cariler = Array.isArray(data.cariler) ? data.cariler : [];
-          guncelle();
-          alert('Veriler içe aktarıldı.');
-        } catch (err) {
-          alert('JSON okunamadı.');
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = '';
-    }
-
-    function girisKorumasiniBaslat() {
-      if (!localStorage.getItem(PASSWORD_KEY)) return;
-      document.getElementById('loginOverlay').classList.remove('hidden');
-    }
-
-    function girisYap() {
-      const pass = document.getElementById('loginPassword').value;
-      if (pass === localStorage.getItem(PASSWORD_KEY)) {
-        document.getElementById('loginOverlay').classList.add('hidden');
-        document.getElementById('loginPassword').value = '';
-      } else {
-        alert('Şifre yanlış.');
-      }
-    }
-
-    function sifresizDevamEt() { document.getElementById('loginOverlay').classList.add('hidden'); }
-
-    function sifreOlusturVeyaGuncelle() {
-      const yeni = prompt('Yeni şifre');
-      if (!yeni) return;
-      localStorage.setItem(PASSWORD_KEY, yeni);
-      alert('Şifre kaydedildi.');
-      document    }
 
     function aylikRaporGuncelle() {
       const secilenAy = document.getElementById('raporAy').value;
@@ -872,15 +1261,14 @@ r);
         kutu.textContent = 'Lütfen bir ay seç.';
         return;
       }
-      const [yil, ay] = secilenAy.split('-');
-      const prefix = `${yil}-${ay}`;
-      const aylikHareketler = hareketler.filter(x => (x.tarih || '').startsWith(prefix));
-      const aylikBorclar = borclar.filter(x => (x.vade || '').startsWith(prefix));
+      const aylikHareketler = hareketler.filter(x => (x.tarih || '').startsWith(secilenAy));
+      const aylikBorclar = borclar.filter(x => (x.vade || '').startsWith(secilenAy));
       const gelir = aylikHareketler.filter(x => x.tur === 'gelir').reduce((a,b)=>a+sayi(b.tutar),0);
-      const gider = Math.abs(aylikHarekider').reduce((a,b)=>a+sayi(b.tutar),0));
+      const gider = Math.abs(aylikHareketler.filter(x => x.tur === 'gider').reduce((a,b)=>a+sayi(b.tutar),0));
       const transfer = aylikHareketler.filter(x => x.tur === 'transfer').length;
       const borcToplam = aylikBorclar.filter(x => x.tip === 'borc').reduce((a,b)=>a+sayi(b.tutar),0);
       const alacakToplam = aylikBorclar.filter(x => x.tip === 'alacak').reduce((a,b)=>a+sayi(b.tutar),0);
+      const [yil, ay] = secilenAy.split('-');
       kutu.innerHTML = `Seçilen dönem: <strong>${ay}/${yil}</strong><br>Gelir: <strong>${paraYazdir(gelir)}</strong><br>Gider: <strong>${paraYazdir(gider)}</strong><br>Net: <strong>${paraYazdir(gelir-gider)}</strong><br>Transfer adedi: <strong>${transfer}</strong><br>Ay içi borç: <strong>${paraYazdir(borcToplam)}</strong><br>Ay içi alacak: <strong>${paraYazdir(alacakToplam)}</strong>`;
     }
 
@@ -904,52 +1292,61 @@ r);
           <td>${x.vade}</td>
           <td class="${x.kalan < 0 ? 'negative' : x.kalan <= 3 ? 'negative' : 'positive'}">${x.kalan}</td>
           <td>${x.durum}</td>
-        </tr>
-      `).join('') : '<tr><td colspan="6">Yaklaşan vade yok function sekmeAc(ad, btn) {
-      document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
-      const panel = document.getElementById(`tab-${ad}`);
-      if (panel) panel.classList.add('active');
-      if (btn) btn.classList.add('active');
+        </tr>`).join('') : '<tr><td colspan="6">Yaklaşan vade yok.</td></tr>';
     }
 
-    function taksitliHarcamaEkle() {
-      const tarih = document.getElementById('taksitTarih').value || bugunStr();
-      const kategori = document.getElementById('taksitKategori').value.trim();
-      const aciklama = document.getElementById('taksitAciklama').value.trim();
-      const toplam = sayi(document.getElementById('taksitToplam').value);
-      const adet = Math.max(1, Math.floor(sayi(document.getElementById('taksitAdet').value)));
-      const hesap = document.getElementById('taksitHesap').value;
-      if (!kategori || !toplam || !adet || !hesap) return alert('Taksit bilgilerini doldur.');
-      const aylik = Number((toplam / adet).toFixed(2));
-      const baslangic = new Date(tarih);
-      for (let i = 0; i < adet; i++) {
-        const d = new Date(baslangic);
-        d.setMonth(d.getMonth() + i);
-        const t = d.toISOString().slice(0, 10);
-        const sonTaksit = i === adet - 1;
-        const tutar = sonTaksit ? -(Number((toplam - (aylik * (adet - 1))).toFixed(2))) : -aylik;
-        hareketler.unshift({ id: uid(), tarih: t, tur: 'gider', kategori, aciklama: `${aciklama || 'Taksitli harcama'} (${i+1}/${adet})`, tutar, hesap, taksitGrup: `${tarih}-${kategori}-${toplam}-${adet}` });
-      }
-      const hesapKaydi = hesaplar.find(h => h.hesap === hesap);
-      if (hesapKaydi) hesapKaydi.bakiye += -toplam;
-      formTemizle();
-      guncelle();
-    }
+    function grafikleriGuncelle() {
+      const yatirimEtiketleri = yatirimlar.map(x => x.varlik);
+      const yatirimDegerleri = yatirimlar.map(x => {
+        const kur = kurlar.find(k => k.varlik === x.varlik);
+        const guncelFiyat = kur ? sayi(kur.fiyat) : sayi(x.maliyetFiyat);
+        return Number((sayi(x.miktar) * guncelFiyat).toFixed(2));
+      });
+      const finansEtiketleri = ['Banka', 'Nakit', 'Kart Borcu', 'Cari Alacak', 'Cari Borç'];
+      const finansDegerleri = [
+        hesaplar.filter(x => x.tip === 'Banka').reduce((a, b) => a + sayi(b.bakiye), 0),
+        hesaplar.filter(x => x.tip === 'Nakit').reduce((a, b) => a + sayi(b.bakiye), 0),
+        Math.abs(hesaplar.filter(x => x.tip === 'Kredi Kartı').reduce((a, b) => a + sayi(b.bakiye), 0)),
+        cariler.filter(x => x.bakiye > 0).reduce((a, b) => a + sayi(b.bakiye), 0),
+        Math.abs(cariler.filter(x => x.bakiye < 0).reduce((a, b) => a + sayi(b.bakiye), 0))
+      ];
+      const karZararEtiketleri = yatirimlar.map(x => x.varlik);
+      const karZararDegerleri = yatirimlar.map(x => {
+        const kur = kurlar.find(k => k.varlik === x.varlik);
+        const guncelFiyat = kur ? sayi(kur.fiyat) : sayi(x.maliyetFiyat);
+        return Number(((sayi(x.miktar) * guncelFiyat) - (sayi(x.miktar) * sayi(x.maliyetFiyat))).toFixed(2));
+      });
+      const giderler = hareketler.filter(x => x.tur === 'gider');
+      const kategoriMap = {};
+      giderler.forEach(x => { const key = x.kategori || 'Diğer'; kategoriMap[key] = (kategoriMap[key] || 0) + Math.abs(sayi(x.tutar)); });
+      const kategoriEtiketleri = Object.keys(kategoriMap);
+      const kategoriDegerleri = Object.values(kategoriMap);
 
-    function transferYap() {
-      const kaynak = document.getElementById('transferKaynak').value;
-      const hedef = document.getElementById('transferHedef').value;
-      const tutar = sayi(document.getElementById('transferTutar').value);
-      const tarih = document.getElementById('transferTarih').value;
-      if (!kaynak || !hedef || !tutar) return alert('Transfer bilgilerini doldur.');
-      const k1 = hesaplar.find(h => h.hesap === kaynak);
-      const k2 = hesaplar.find(h => h.hesap === hedef);
-      if (!k1 || !k2) return;
-      k1.bakiye -= tutar;
-      k2.bakiye += tutar;
-      hareketler.unshift({ id: uid(), tarih, tur: 'transfer', kategori: 'Transfer', aciklama: `${kaynak} → ${hedef}`, tutar: 0, hesap: hedef });
-      guncelle();
+      if (yatirimDagilimChart) yatirimDagilimChart.destroy();
+      if (finansOzetChart) finansOzetChart.destroy();
+      if (yatirimKarZararChart) yatirimKarZararChart.destroy();
+      if (kategoriPastaChart) kategoriPastaChart.destroy();
+
+      yatirimDagilimChart = new Chart(document.getElementById('yatirimDagilimGrafigi'), {
+        type: 'doughnut',
+        data: { labels: yatirimEtiketleri.length ? yatirimEtiketleri : ['Veri yok'], datasets: [{ data: yatirimDegerleri.length ? yatirimDegerleri : [1] }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      finansOzetChart = new Chart(document.getElementById('finansOzetGrafigi'), {
+        type: 'bar',
+        data: { labels: finansEtiketleri, datasets: [{ label: 'Tutar', data: finansDegerleri }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      yatirimKarZararChart = new Chart(document.getElementById('yatirimKarZararGrafigi'), {
+        type: 'bar',
+        data: { labels: karZararEtiketleri.length ? karZararEtiketleri : ['Veri yok'], datasets: [{ label: 'Kâr / Zarar', data: karZararDegerleri.length ? karZararDegerleri : [0] }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      kategoriPastaChart = new Chart(document.getElementById('kategoriPastaGrafigi'), {
+        type: 'pie',
+        data: { labels: kategoriEtiketleri.length ? kategoriEtiketleri : ['Veri yok'], datasets: [{ data: kategoriDegerleri.length ? kategoriDegerleri : [1] }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
     }
 
     function guncelle() {
@@ -965,19 +1362,12 @@ r);
       hatirlatmalariGoster();
       aylikRaporGuncelle();
       verileriKaydet();
+      backupListesiniGoster();
     }
 
     temaYukle();
     verileriYukle();
     varsayilanTarihleriDoldur();
-    const raporAyEl = document.getElementById('raporAy');
-    if (raporAyEl && !raporAyEl.value) raporAyEl.value = bugunStr().slice(0,7);
-    const transferTarihEl = document.getElementById('transferTarih');
-    if (transferTarihEl && !transferTarihEl.value) transferTarihEl.value = bugunStr();
-    const taksitTarihEl = document.getElementById('taksitTarih');
-    if (taksitTarihEl && !taksitTarihEl.value) taksitTarihEl.value = bugunStr();
-    const taksitHesapEl = document.getElementById('taksitHesap');
-    if (taksitHesapEl) taksitHesapEl.innerHTML = hesaplar.map(h => `<option value="${h.hesap}">${h.hesap}</option>`).join('');
     guncelle();
     girisKorumasiniBaslat();
   </script>
